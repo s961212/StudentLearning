@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小學數學 - 算柱與位值學習 App</title>
+  <style>
+    body {
+      font-family: "PingFang HK", "Microsoft JhengHei", sans-serif;
+      background-color: #f0f8ff;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      background: white;
+      max-width: 600px;
+      width: 100%;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 5px;
+    }
+
+    .progress {
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #7f8c8d;
+      margin-bottom: 20px;
+    }
+
+    .question-card {
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 20px;
+      background-color: #fafafa;
+    }
+
+    .canvas-container {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    canvas {
+      background-color: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+
+    .sub-question {
+      margin: 15px 0;
+      font-size: 1.1rem;
+      color: #333;
+    }
+
+    input[type="number"] {
+      font-size: 1rem;
+      padding: 6px 10px;
+      width: 80px;
+      border: 2px solid #3498db;
+      border-radius: 5px;
+      text-align: center;
+    }
+
+    .options-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .option-btn {
+      padding: 8px 16px;
+      font-size: 1rem;
+      border: 2px solid #3498db;
+      background-color: white;
+      color: #3498db;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .option-btn.selected {
+      background-color: #3498db;
+      color: white;
+    }
+
+    .btn-submit {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: white;
+      background-color: #2ecc71;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .btn-submit:hover {
+      background-color: #27ae60;
+    }
+
+    .result-screen {
+      text-align: center;
+      display: none;
+    }
+
+    .score-display {
+      font-size: 3rem;
+      color: #e67e22;
+      font-weight: bold;
+      margin: 15px 0;
+    }
+
+    .feedback {
+      font-size: 1.2rem;
+      color: #2c3e50;
+      margin-bottom: 25px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🧮 算柱與位值大挑戰</h1>
+  <div id="progress" class="progress">第 1 / 3 題</div>
+
+  <!-- 答題區域 -->
+  <div id="quiz-screen">
+    <div class="question-card">
+      <div class="canvas-container">
+        <canvas id="abacusCanvas" width="260" height="200"></canvas>
+      </div>
+
+      <!-- (a) 算柱表示的數 -->
+      <div class="sub-question">
+        <strong>(a)</strong> 上面算柱表示的數是：
+        <input type="number" id="inputA" placeholder="3位數" min="100" max="999">
+      </div>
+
+      <hr style="border: 0; border-top: 1px dashed #ccc; margin: 15px 0;">
+
+      <!-- (b) 位值代表的數 -->
+      <div class="sub-question">
+        <strong>(b)</strong> 在這個數裏，數字「<span id="targetDigit" style="color:#e74c3c; font-weight:bold;">-</span>」表示的值是：
+        <div id="optionsGroup" class="options-group">
+          <!-- 選項由 JS 動態生成 -->
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-submit" onclick="submitAnswer()">下一題 ➔</button>
+  </div>
+
+  <!-- 結算區域 -->
+  <div id="result-screen" class="result-screen">
+    <h2>🎉 答題完成！</h2>
+    <div class="score-display" id="finalScore">0 分</div>
+    <div class="feedback" id="feedbackText"></div>
+    <button class="btn-submit" onclick="restartQuiz()">再玩一次 🔄</button>
+  </div>
+</div>
+
+<script>
+  let currentQuestion = 0;
+  let totalScore = 0;
+  let questions = [];
+  let selectedOptionB = null;
+
+  // 初始化題目數據 (共 3 題)
+  function initQuestions() {
+    questions = [];
+    for (let i = 0; i < 3; i++) {
+      // 隨機生成 100 ~ 999 的三位數
+      const num = Math.floor(Math.random() * 900) + 100;
+      const digits = [
+        Math.floor(num / 100),       // 百位 (1-9)
+        Math.floor((num % 100) / 10),// 十位 (0-9)
+        num % 10                     // 個位 (0-9)
+      ];
+
+      // 隨機選一個位置測試 (0:百位, 1:十位, 2:個位)
+      const targetPosIndex = Math.floor(Math.random() * 3);
+      const targetDigit = digits[targetPosIndex];
+
+      // 計算正確的表示值 (如百位的4代表400)
+      const placeMultiplier = [100, 10, 1][targetPosIndex];
+      const correctValueB = targetDigit * placeMultiplier;
+
+      // 生成選項 (包含正確答案與干擾項)
+      let optionsB = [
+        targetDigit,                     // 數字本身 (例如 4)
+        targetDigit * 10,                // 十位值 (例如 40)
+        targetDigit * 100                // 百位值 (例如 400)
+      ];
+      if (placeMultiplier !== 100) optionsB.push(100); // 增加常見干擾項如 100
+
+      // 去重並排序
+      optionsB = [...new Set(optionsB)].filter(val => val <= 900).sort((a,b) => a - b);
+
+      questions.push({
+        num: num,
+        digits: digits,
+        targetDigit: targetDigit,
+        targetPosIndex: targetPosIndex,
+        correctValueB: correctValueB,
+        optionsB: optionsB
+      });
+    }
+  }
+
+  // 繪製算柱 (Canvas)
+  function drawAbacus(digits) {
+    const canvas = document.getElementById("abacusCanvas");
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const labels = ["百位", "十位", "個位"];
+    const startX = 50;
+    const spacing = 80;
+    const baseY = 150;
+
+    labels.forEach((label, index) => {
+      const x = startX + index * spacing;
+
+      // 畫底座底框[cite: 1]
+      ctx.strokeStyle = "#333";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x - 25, baseY, 50, 35);
+      ctx.font = "bold 14px sans-serif";
+      ctx.fillStyle = "#333";
+      ctx.textAlign = "center";
+      ctx.fillText(label, x, baseY + 22);
+
+      // 畫算柱鐵絲
+      ctx.beginPath();
+      ctx.moveTo(x, baseY);
+      ctx.lineTo(x, 20);
+      ctx.stroke();
+
+      // 畫算珠[cite: 1]
+      const count = digits[index];
+      const beadHeight = 12;
+      const beadRadiusX = 16;
+
+      for (let b = 0; b < count; b++) {
+        const y = baseY - (b * (beadHeight + 2)) - 8;
+        ctx.beginPath();
+        ctx.ellipse(x, y, beadRadiusX, beadHeight / 2, 0, 0, Math.PI * 2);
+        ctx.fillStyle = "#7f8c8d";
+        ctx.fill();
+        ctx.strokeStyle = "#2c3e50";
+        ctx.stroke();
+      }
+    });
+  }
+
+  // 載入當前題目
+  function loadQuestion() {
+    const q = questions[currentQuestion];
+    selectedOptionB = null;
+
+    // 更新進度
+    document.getElementById("progress").innerText = `第 ${currentQuestion + 1} / 3 題`;
+    document.getElementById("inputA").value = "";
+    document.getElementById("targetDigit").innerText = q.targetDigit;
+
+    // 繪製算柱
+    drawAbacus(q.digits);
+
+    // 生成 (b) 選項按鈕
+    const optionsGroup = document.getElementById("optionsGroup");
+    optionsGroup.innerHTML = "";
+    q.optionsB.forEach(opt => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.innerText = opt;
+      btn.onclick = () => {
+        document.querySelectorAll(".option-btn").forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        selectedOptionB = opt;
+      };
+      optionsGroup.appendChild(btn);
+    });
+  }
+
+  // 提交答案
+  function submitAnswer() {
+    const ansA = parseInt(document.getElementById("inputA").value);
+    const q = questions[currentQuestion];
+
+    if (isNaN(ansA)) {
+      alert("請輸入 (a) 的 3 位數字答案！");
+      return;
+    }
+    if (selectedOptionB === null) {
+      alert("請選擇 (b) 表示的數值！");
+      return;
+    }
+
+    // 計分 (每小題 10 分，一題共 20 分)
+    if (ansA === q.num) {
+      totalScore += 10;
+    }
+    if (selectedOptionB === q.correctValueB) {
+      totalScore += 10;
+    }
+
+    currentQuestion++;
+
+    if (currentQuestion < 3) {
+      loadQuestion();
+    } else {
+      showResults();
+    }
+  }
+
+  // 顯示結果
+  function showResults() {
+    document.getElementById("quiz-screen").style.display = "none";
+    document.getElementById("progress").style.display = "none";
+    document.getElementById("result-screen").style.display = "block";
+
+    const finalScoreElem = document.getElementById("finalScore");
+    const feedbackElem = document.getElementById("feedbackText");
+
+    finalScoreElem.innerText = `${totalScore} / 60 分`;
+
+    if (totalScore === 60) {
+      feedbackElem.innerText = "🌟 太厲害了！全對！你已經完全掌握算柱同位值啦！";
+    } else if (totalScore >= 40) {
+      feedbackElem.innerText = "👍 做得好！繼續努力，下次挑戰滿分！";
+    } else {
+      feedbackElem.innerText = "💪 不要灰心，再試一次，多加練習就會進步！";
+    }
+  }
+
+  // 重新開始
+  function restartQuiz() {
+    currentQuestion = 0;
+    totalScore = 0;
+    document.getElementById("quiz-screen").style.display = "block";
+    document.getElementById("progress").style.display = "block";
+    document.getElementById("result-screen").style.display = "none";
+    initQuestions();
+    loadQuestion();
+  }
+
+  // 頁面加載完成時初始化
+  window.onload = () => {
+    initQuestions();
+    loadQuestion();
+  };
+</script>
+
+</body>
+</html>
