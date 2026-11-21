@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <title>互動式數學教學 - 進位修正版</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; height: 100vh; background: #fffdf5; cursor: pointer; user-select: none; }
+        .container { display: flex; height: 100%; width: 100%; }
+        
+        .panel { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        #left { border-right: 3px dashed #ccc; position: relative; }
+        
+        /* 計算部分樣式 */
+        .calc-box { font-size: 7rem; font-weight: bold; text-align: right; position: relative; width: 300px; }
+        .digit { padding: 0 10px; border-radius: 10px; transition: 0.3s; }
+        .highlight { background: #ffeb3b; color: #d32f2f; }
+        .line { border-bottom: 8px solid #333; width: 100%; margin: 10px 0; }
+        
+        /* 進位數字樣式 - 已重新定位 */
+        #carry-num { 
+            position: absolute; 
+            top: 235px;  /* 調整垂直高度，使其位於第二行數字上方 */
+            right: 175px; /* 調整水平位置，使其位於十位與個位之間 */
+            font-size: 3.5rem; 
+            color: #2980b9; 
+            font-weight: bold; 
+            display: none;
+            z-index: 10;
+        }
+
+        #ans-u, #ans-t { color: blue; } 
+
+        /* 教學部分 */
+        #right { background: #f0f8ff; }
+        .visual-box { display: flex; align-items: center; justify-content: center; gap: 20px; height: 250px; }
+        
+        .heart-shape {
+            width: 120px; height: 120px; background-color: #ff4d4d;
+            clip-path: path('M60,110 C-30,40 10,-20 60,30 C110,-20 150,40 60,110');
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3rem; color: white; font-weight: bold;
+        }
+        
+        .finger-group { display: flex; gap: 10px; }
+        .finger { position: relative; font-size: 3.5rem; display: flex; flex-direction: column; align-items: center; }
+        .finger-num { font-size: 2rem; color: #333; font-weight: bold; background: rgba(255,255,255,0.9); border-radius: 50%; padding: 5px; }
+    </style>
+</head>
+<body onclick="nextStep()">
+
+<div class="container">
+    <div class="panel" id="left">
+        <h2>計算部分</h2>
+        <div class="calc-box">
+            <div id="carry-num">1</div> <div><span id="t1" class="digit"></span><span id="u1" class="digit"></span></div>
+            <div>+ <span id="t2" class="digit"></span><span id="u2" class="digit"></span></div>
+            <div class="line"></div>
+            <div style="height: 100px;">
+                <span id="ans-t"></span><span id="ans-u"></span>
+            </div>
+        </div>
+        <p style="font-size: 1.2rem; color: #666;">點擊空白處進行下一步</p>
+    </div>
+
+    <div class="panel" id="right">
+        <h2 id="title">計算教學</h2>
+        <div class="visual-box" id="visual-content"></div>
+        <p id="desc" style="font-size: 1.6rem; font-weight:bold;"></p>
+    </div>
+</div>
+
+<script>
+    let step = 0;
+    let u1, u2, t1, t2, uMax, uMin, tMax, tMin, hasCarry;
+
+    function generateNewProblem() {
+        const n1 = Math.floor(Math.random() * 80) + 10;
+        const n2 = Math.floor(Math.random() * 80) + 10;
+        u1 = n1 % 10; t1 = Math.floor(n1 / 10);
+        u2 = n2 % 10; t2 = Math.floor(n2 / 10);
+        
+        hasCarry = (u1 + u2) >= 10;
+        uMax = Math.max(u1, u2); uMin = Math.min(u1, u2);
+        tMax = Math.max(t1, t2); tMin = Math.min(t1, t2);
+
+        document.getElementById('t1').innerText = t1;
+        document.getElementById('u1').innerText = u1;
+        document.getElementById('t2').innerText = t2;
+        document.getElementById('u2').innerText = u2;
+        document.getElementById('ans-t').innerText = "";
+        document.getElementById('ans-u').innerText = "";
+        document.getElementById('carry-num').style.display = "none";
+        step = 0;
+    }
+
+    function nextStep() {
+        const maxStep = hasCarry ? 13 : 12;
+        if (step < maxStep) {
+            step++;
+        } else {
+            generateNewProblem();
+        }
+        updateUI();
+    }
+
+    function updateUI() {
+        const u1El = document.getElementById('u1'), u2El = document.getElementById('u2');
+        const t1El = document.getElementById('t1'), t2El = document.getElementById('t2');
+        const ansU = document.getElementById('ans-u'), ansT = document.getElementById('ans-t');
+        const visual = document.getElementById('visual-content');
+        const desc = document.getElementById('desc');
+        const carryNum = document.getElementById('carry-num');
+
+        [u1El, u2El, t1El, t2El].forEach(el => el.classList.remove('highlight'));
+        visual.innerHTML = '';
+
+        const getFingers = (count, startNum, showNum) => {
+            let html = '<div class="finger-group">';
+            for(let i=1; i<=count; i++) {
+                html += `<div class="finger">☝️${showNum ? `<span class="finger-num">${startNum+i}</span>` : ''}</div>`;
+            }
+            html += '</div>';
+            return html;
+        };
+
+        switch(step) {
+            case 1: u1El.classList.add('highlight'); u2El.classList.add('highlight'); desc.innerText = "第一步：比較個位"; break;
+            case 2: visual.innerHTML = `<div class="heart-shape"></div>`; desc.innerText = "出現心形。"; break;
+            case 3: visual.innerHTML = `<div class="heart-shape">${uMax}</div>`; desc.innerText = `心形數字是：${uMax}`; break;
+            case 4: visual.innerHTML = `<div class="heart-shape">${uMax}</div>${getFingers(uMin, uMax, false)}`; desc.innerText = "出現手指。"; break;
+            case 5: visual.innerHTML = `<div class="heart-shape">${uMax}</div>${getFingers(uMin, uMax, true)}`; desc.innerText = `從 ${uMax} 數起...`; break;
+            case 6: 
+                ansU.innerText = (u1+u2) % 10; 
+                desc.innerText = `個位答案是：${(u1+u2) % 10}`; 
+                if(hasCarry) { carryNum.style.display = "block"; desc.innerText += " (總和大於10，需進位1)"; }
+                break;
+            
+            default:
+                const offset = hasCarry ? 1 : 0;
+                if (hasCarry && step === 7) { desc.innerText = "因為有進位，十位計算要加上 1。"; break; }
+                
+                const curStep = step - offset;
+                if (curStep === 7) { t1El.classList.add('highlight'); t2El.classList.add('highlight'); desc.innerText = "第二步：比較十位"; }
+                else if (curStep === 8) { visual.innerHTML = `<div class="heart-shape"></div>`; desc.innerText = "出現心形。"; }
+                else if (curStep === 9) { visual.innerHTML = `<div class="heart-shape">${tMax}</div>`; desc.innerText = `心形數字是：${tMax}`; }
+                else if (curStep === 10) { visual.innerHTML = `<div class="heart-shape">${tMax}</div>${getFingers(tMin, tMax, false)}`; desc.innerText = "出現手指。"; }
+                else if (curStep === 11) { visual.innerHTML = `<div class="heart-shape">${tMax}</div>${getFingers(tMin, tMax, true)}`; desc.innerText = `從 ${tMax} 數起...`; }
+                else if (curStep === 12) { 
+                    const finalTens = t1 + t2 + (hasCarry ? 1 : 0);
+                    ansT.innerText = finalTens;
+                    desc.innerText = `十位答案是：${finalTens}` + (hasCarry ? " (包含進位來的1)" : ""); 
+                }
+        }
+    }
+    generateNewProblem();
+    updateUI();
+</script>
+</body>
+</html>

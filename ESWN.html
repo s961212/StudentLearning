@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>東南西北大冒險 - 小朋友方向訓練</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            font-family: "Microsoft JhengHei", "PingFang HK", "Heiti TC", sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 90%;
+            max-width: 900px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 30px;
+            border-radius: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 22px;
+            font-weight: bold;
+            color: #333;
+        }
+        .mode-btn {
+            background: #4ecdc4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #38a39b;
+            transition: transform 0.1s;
+        }
+        .mode-btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 90%;
+            max-width: 900px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 30px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+        }
+        .question-box {
+            font-size: 36px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+            min-height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        .speak-btn {
+            background: #ffe66d;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #d4bc46;
+        }
+        .speak-btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+        .compass-grid {
+            display: grid;
+            grid-template-columns: 160px 160px 160px;
+            grid-template-rows: 160px 160px 160px;
+            gap: 15px;
+            margin: 10px 0;
+        }
+        .cell {
+            background: #f8f9fa;
+            border: 4px dashed #ced4da;
+            border-radius: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: #495057;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .cell.dir-btn {
+            background: #ffffff;
+            border: 4px solid #74b9ff;
+            box-shadow: 0 8px 0 #0984e3;
+        }
+        .cell.dir-btn:hover {
+            background: #ebf5ff;
+            transform: scale(1.03);
+        }
+        .cell.dir-btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 #0984e3;
+        }
+        .cell.center {
+            background: #fff3cd;
+            border: 4px solid #ffca28;
+            cursor: default;
+            font-size: 65px;
+        }
+        .cell.empty {
+            background: transparent;
+            border: none;
+            cursor: default;
+        }
+        .emoji {
+            font-size: 55px;
+            margin-bottom: 5px;
+        }
+        .label {
+            font-size: 26px;
+        }
+        .feedback {
+            font-size: 32px;
+            font-weight: bold;
+            height: 45px;
+            margin-top: 15px;
+            text-align: center;
+        }
+        .correct { color: #2ecc71; animation: bounce 0.5s; }
+        .wrong { color: #e74c3c; animation: shake 0.4s; }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        @media (max-width: 600px) {
+            .compass-grid {
+                grid-template-columns: 105px 105px 105px;
+                grid-template-rows: 105px 105px 105px;
+                gap: 10px;
+            }
+            .emoji { font-size: 38px; }
+            .label { font-size: 20px; }
+            .question-box { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="title">🧭 東南西北大冒險</div>
+        <div class="stats">
+            <span>⭐ 分數: <span id="score">0</span></span>
+            <span>🔥 連勝: <span id="streak">0</span></span>
+        </div>
+        <button class="mode-btn" id="modeBtn" onclick="toggleMode()">模式：圖案提示</button>
+    </div>
+
+    <div class="game-container">
+        <div class="question-box">
+            <span id="questionText">準備好未？</span>
+            <button class="speak-btn" onclick="speakQuestion()" title="再聽一次">🔊</button>
+        </div>
+
+        <div class="compass-grid">
+            <div class="cell empty"></div>
+            <div class="cell dir-btn" id="btn-N" onclick="checkAnswer('N')">
+                <span class="emoji" id="icon-N">❄️</span>
+                <span class="label" id="text-N">北</span>
+            </div>
+            <div class="cell empty"></div>
+
+            <div class="cell dir-btn" id="btn-W" onclick="checkAnswer('W')">
+                <span class="emoji" id="icon-W">🌅</span>
+                <span class="label" id="text-W">西</span>
+            </div>
+            <div class="cell center" id="centerCharacter">👦</div>
+            <div class="cell dir-btn" id="btn-E" onclick="checkAnswer('E')">
+                <span class="emoji" id="icon-E">☀️</span>
+                <span class="label" id="text-E">東</span>
+            </div>
+
+            <div class="cell empty"></div>
+            <div class="cell dir-btn" id="btn-S" onclick="checkAnswer('S')">
+                <span class="emoji" id="icon-S">🌴</span>
+                <span class="label" id="text-S">南</span>
+            </div>
+            <div class="cell empty"></div>
+        </div>
+
+        <div class="feedback" id="feedback"></div>
+    </div>
+
+    <script>
+        let score = 0;
+        let streak = 0;
+        let currentTarget = '';
+        let currentQuestionText = '';
+        // 模式 0: 顯示文字+圖案, 模式 1: 隱藏方位文字(考記憶), 模式 2: 情景尋寶題
+        let gameMode = 0; 
+        let isWaiting = false;
+
+        const directions = {
+            'N': { name: '北', fullName: '北方', emoji: '❄️', hint: '上面係北方' },
+            'S': { name: '南', fullName: '南方', emoji: '🌴', hint: '下面係南方' },
+            'E': { name: '東', fullName: '東方', emoji: '☀️', hint: '右邊係東方' },
+            'W': { name: '西', fullName: '西方', emoji: '🌅', hint: '左邊係西方' }
+        };
+
+        const treasureItems = [
+            { item: '🍎 蘋果', dir: 'N' },
+            { item: '🐶 狗仔', dir: 'S' },
+            { item: '🚀 火箭', dir: 'E' },
+            { item: '🍦 雪糕', dir: 'W' },
+            { item: '🦁 獅子', dir: 'N' },
+            { item: '🚗 車車', dir: 'S' },
+            { item: '⚽ 足球', dir: 'E' },
+            { item: '🍓 士多啤梨', dir: 'W' }
+        ];
+
+        const characters = ['👦', '👧', '🐻', '🐰', '🐼', '🦊'];
+
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-HK';
+                utterance.rate = 0.95;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function speakQuestion() {
+            speak(currentQuestionText);
+        }
+
+        function toggleMode() {
+            gameMode = (gameMode + 1) % 3;
+            const btn = document.getElementById('modeBtn');
+            if (gameMode === 0) {
+                btn.innerText = '模式：初階（有字有圖）';
+            } else if (gameMode === 1) {
+                btn.innerText = '模式：進階（隱藏文字）';
+            } else {
+                btn.innerText = '模式：情景尋寶';
+            }
+            nextQuestion();
+        }
+
+        function updateBoardDisplay() {
+            const dirs = ['N', 'S', 'E', 'W'];
+            dirs.forEach(d => {
+                const iconEl = document.getElementById(`icon-${d}`);
+                const textEl = document.getElementById(`text-${d}`);
+                
+                if (gameMode === 0) {
+                    iconEl.innerText = directions[d].emoji;
+                    textEl.innerText = directions[d].name;
+                } else if (gameMode === 1) {
+                    iconEl.innerText = '❓';
+                    textEl.innerText = '';
+                } else if (gameMode === 2) {
+                    // 尋寶模式由 nextQuestion 決定圖案
+                    textEl.innerText = directions[d].name;
+                }
+            });
+        }
+
+        function nextQuestion() {
+            isWaiting = false;
+            document.getElementById('feedback').innerText = '';
+            document.getElementById('centerCharacter').innerText = 
