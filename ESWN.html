@@ -24,6 +24,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
             width: 100%;
             max-width: 720px;
             background: rgba(255, 255, 255, 0.92);
@@ -31,6 +33,65 @@
             border-radius: 20px;
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
             margin-bottom: 12px;
+        }
+        .head-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .icon-toggle {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            color: #475569;
+            background: #f1f5f9;
+            border-radius: 999px;
+            padding: 6px 12px;
+        }
+        .icon-toggle input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .icon-toggle .track {
+            width: 38px;
+            height: 22px;
+            border-radius: 999px;
+            background: #cbd5e1;
+            position: relative;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        .icon-toggle .track::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+            transition: transform 0.2s;
+        }
+        .icon-toggle input:checked + .track {
+            background: #2a9d8f;
+        }
+        .icon-toggle input:checked + .track::after {
+            transform: translateX(16px);
+        }
+        .icon-toggle input:focus-visible + .track {
+            outline: 3px solid #1d4ed8;
+            outline-offset: 2px;
+        }
+        body.no-icons .chip .icon,
+        body.no-icons .given-chip .gicon,
+        body.no-icons .dir-tag .icon {
+            display: none;
         }
         .title {
             font-size: 24px;
@@ -303,7 +364,14 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">🧭 東南西北大冒險</div>
+        <div class="head-left">
+            <label class="icon-toggle">
+                <input type="checkbox" id="iconToggle" checked>
+                <span class="track"></span>
+                <span>顯示圖示</span>
+            </label>
+            <div class="title">🧭 東南西北大冒險</div>
+        </div>
         <div class="score">⭐ 答對：<span id="score">0</span> 題</div>
     </div>
 
@@ -595,8 +663,8 @@
 
             // 指示文字
             document.getElementById('instruction').innerHTML =
-                '指南針話你知 <span class="dir-tag" style="background:' + COLORS[DIRS[givenDir]] + '">' +
-                ICONS[DIRS[givenDir]] + ' ' + DIRS[givenDir] + '</span> 喺邊，將其餘三個方向拖去正確位置！';
+                '指南針話你知 <span class="dir-tag" style="background:' + COLORS[DIRS[givenDir]] + '"><span class="icon">' +
+                ICONS[DIRS[givenDir]] + '</span> ' + DIRS[givenDir] + '</span> 喺邊，將其餘三個方向拖去正確位置！';
 
             // 三塊方向牌（隨機次序）
             tray.innerHTML = '';
@@ -616,6 +684,24 @@
                 newRound();
             }
         });
+
+        // 顯示圖示開關（localStorage 記住選擇）
+        var iconToggle = document.getElementById('iconToggle');
+        var showIcons = true;
+        try {
+            var stored = localStorage.getItem('eswn_show_icons');
+            if (stored !== null) showIcons = (stored === '1');
+        } catch (e) {}
+        function applyIconPref() {
+            document.body.classList.toggle('no-icons', !showIcons);
+            iconToggle.checked = showIcons;
+        }
+        iconToggle.addEventListener('change', function () {
+            showIcons = iconToggle.checked;
+            try { localStorage.setItem('eswn_show_icons', showIcons ? '1' : '0'); } catch (e) {}
+            applyIconPref();
+        });
+        applyIconPref();
 
         newRound();
     </script>
