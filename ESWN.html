@@ -3,307 +3,607 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>東南西北大冒險 - 小朋友方向訓練</title>
+    <title>東南西北大冒險 - 指南針方向練習</title>
     <style>
         * {
             box-sizing: border-box;
-            user-select: none;
             font-family: "Microsoft JhengHei", "PingFang HK", "Heiti TC", sans-serif;
         }
         body {
             margin: 0;
-            padding: 0;
+            padding: 16px;
             background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            min-height: 100dvh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
         }
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 90%;
-            max-width: 900px;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 15px 30px;
-            border-radius: 25px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            width: 100%;
+            max-width: 720px;
+            background: rgba(255, 255, 255, 0.92);
+            padding: 12px 24px;
+            border-radius: 20px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+            margin-bottom: 12px;
         }
         .title {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: bold;
             color: #ff6b6b;
         }
-        .stats {
-            display: flex;
-            gap: 20px;
-            font-size: 22px;
+        .score {
+            font-size: 20px;
             font-weight: bold;
-            color: #333;
+            color: #2a9d8f;
         }
-        .mode-btn {
-            background: #4ecdc4;
-            color: white;
-            border: none;
+        .instruction {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 16px;
             padding: 10px 20px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 15px;
-            cursor: pointer;
-            box-shadow: 0 4px 0 #38a39b;
-            transition: transform 0.1s;
-        }
-        .mode-btn:active {
-            transform: translateY(4px);
-            box-shadow: none;
-        }
-        .game-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 90%;
-            max-width: 900px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 30px;
-            border-radius: 30px;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-        }
-        .question-box {
-            font-size: 36px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 20px;
+            font-size: 19px;
+            color: #333;
             text-align: center;
-            min-height: 55px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
+            max-width: 720px;
+            margin: 0 0 8px 0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
         }
-        .speak-btn {
-            background: #ffe66d;
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 24px;
-            cursor: pointer;
-            box-shadow: 0 4px 0 #d4bc46;
-        }
-        .speak-btn:active {
-            transform: translateY(4px);
-            box-shadow: none;
-        }
-        .compass-grid {
-            display: grid;
-            grid-template-columns: 160px 160px 160px;
-            grid-template-rows: 160px 160px 160px;
-            gap: 15px;
-            margin: 10px 0;
-        }
-        .cell {
-            background: #f8f9fa;
-            border: 4px dashed #ced4da;
-            border-radius: 25px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
+        .instruction .dir-tag {
+            display: inline-block;
+            min-width: 1.6em;
+            padding: 0 0.35em;
+            border-radius: 10px;
+            color: #fff;
             font-weight: bold;
-            color: #495057;
-            cursor: pointer;
-            transition: all 0.2s;
+        }
+        .compass {
             position: relative;
+            width: min(92vw, 400px);
+            height: min(92vw, 400px);
+            margin: 4px 0;
         }
-        .cell.dir-btn {
+        .dial {
+            position: absolute;
+            inset: 13%;
+            border-radius: 50%;
             background: #ffffff;
-            border: 4px solid #74b9ff;
-            box-shadow: 0 8px 0 #0984e3;
+            border: 6px solid #ffb703;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), inset 0 0 0 4px #fff3d6;
         }
-        .cell.dir-btn:hover {
-            background: #ebf5ff;
-            transform: scale(1.03);
+        .dial svg {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
-        .cell.dir-btn:active {
-            transform: translateY(6px);
-            box-shadow: 0 2px 0 #0984e3;
+        #needle {
+            transition: transform 0.6s ease;
+            transform-origin: 50px 50px;
         }
-        .cell.center {
-            background: #fff3cd;
-            border: 4px solid #ffca28;
-            cursor: default;
-            font-size: 65px;
+        .zone {
+            position: absolute;
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            border: 3px dashed #94a3b8;
+            background: rgba(255, 255, 255, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            font-weight: bold;
+            color: #b6c2cf;
+            transform: translate(-50%, -50%);
+            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
         }
-        .cell.empty {
-            background: transparent;
-            border: none;
-            cursor: default;
+        .zone[data-pos="0"] { top: 8%;  left: 50%; }
+        .zone[data-pos="1"] { top: 50%; left: 92%; }
+        .zone[data-pos="2"] { top: 92%; left: 50%; }
+        .zone[data-pos="3"] { top: 50%; left: 8%; }
+        .zone.armed {
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 5px rgba(255, 107, 107, 0.2);
         }
-        .emoji {
-            font-size: 55px;
-            margin-bottom: 5px;
+        .zone.correct {
+            border-style: solid;
+            border-color: #2a9d8f;
+            background: #e6f6f4;
         }
-        .label {
-            font-size: 26px;
+        .zone.wrong-flash {
+            border-color: #e63946;
+            background: #ffe5e8;
         }
-        .feedback {
+        .zone.given-zone {
+            border-style: solid;
+            border-color: #ffb703;
+            background: #fff8e6;
+        }
+        .zone:focus-visible, .chip:focus-visible, .next-btn:focus-visible {
+            outline: 3px solid #1d4ed8;
+            outline-offset: 2px;
+        }
+        .tray {
+            display: flex;
+            gap: 18px;
+            justify-content: center;
+            align-items: center;
+            min-height: 90px;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.55);
+            border-radius: 20px;
+            margin-top: 4px;
+        }
+        .chip {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 32px;
             font-weight: bold;
-            height: 45px;
-            margin-top: 15px;
-            text-align: center;
+            color: #fff;
+            cursor: grab;
+            touch-action: none;
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.2);
+            transition: transform 0.25s ease, box-shadow 0.2s;
+            position: relative;
+            z-index: 1;
         }
-        .correct { color: #2ecc71; animation: bounce 0.5s; }
-        .wrong { color: #e74c3c; animation: shake 0.4s; }
-
-        @keyframes bounce {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.2); }
+        .chip.dragging {
+            cursor: grabbing;
+            transition: none;
+            z-index: 50;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+        }
+        .chip.selected {
+            box-shadow: 0 0 0 5px rgba(255, 183, 3, 0.65), 0 5px 12px rgba(0, 0, 0, 0.2);
+        }
+        .chip.locked {
+            cursor: default;
+            box-shadow: none;
+            width: 100%;
+            height: 100%;
+            font-size: 30px;
+        }
+        .chip.shake {
+            animation: shake 0.4s ease;
+        }
+        .given-chip {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 30px;
+            font-weight: bold;
+            line-height: 1.05;
+        }
+        .given-chip .pin {
+            font-size: 13px;
         }
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
         }
-        @media (max-width: 600px) {
-            .compass-grid {
-                grid-template-columns: 105px 105px 105px;
-                grid-template-rows: 105px 105px 105px;
-                gap: 10px;
-            }
-            .emoji { font-size: 38px; }
-            .label { font-size: 20px; }
-            .question-box { font-size: 24px; }
+        .msg {
+            min-height: 34px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #e63946;
+            margin-top: 6px;
+            text-align: center;
+        }
+        .msg.good { color: #2a9d8f; }
+        .tip {
+            font-size: 15px;
+            color: #6b7280;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 6px 14px;
+            border-radius: 12px;
+            margin-top: 4px;
+            text-align: center;
+        }
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(30, 41, 59, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .overlay.show { display: flex; }
+        .win-card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 32px 40px;
+            text-align: center;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+            animation: pop 0.3s ease;
+        }
+        @keyframes pop {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .win-card .big {
+            font-size: 52px;
+        }
+        .win-card .text {
+            font-size: 26px;
+            font-weight: bold;
+            color: #ff6b6b;
+            margin: 10px 0 20px;
+        }
+        .next-btn {
+            background: #4ecdc4;
+            color: #fff;
+            border: none;
+            border-radius: 16px;
+            padding: 14px 36px;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #38b2a8;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .next-btn:hover { background: #45b8b0; }
+        .next-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #38b2a8;
+        }
+        .confetti {
+            position: fixed;
+            top: -30px;
+            font-size: 26px;
+            pointer-events: none;
+            z-index: 101;
+            animation: fall 2.6s linear forwards;
+        }
+        @keyframes fall {
+            to { transform: translateY(110vh) rotate(360deg); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #needle { transition: none; }
+            .chip.shake { animation: none; }
+            .win-card { animation: none; }
+            .confetti { display: none; }
+        }
+        @media (max-width: 420px) {
+            .title { font-size: 20px; }
+            .score { font-size: 17px; }
+            .instruction { font-size: 16px; }
+            .zone { width: 64px; height: 64px; font-size: 26px; }
+            .chip { width: 62px; height: 62px; font-size: 28px; }
+            .chip.locked { font-size: 26px; }
+            .given-chip { font-size: 26px; }
         }
     </style>
 </head>
 <body>
-
     <div class="header">
         <div class="title">🧭 東南西北大冒險</div>
-        <div class="stats">
-            <span>⭐ 分數: <span id="score">0</span></span>
-            <span>🔥 連勝: <span id="streak">0</span></span>
-        </div>
-        <button class="mode-btn" id="modeBtn" onclick="toggleMode()">模式：圖案提示</button>
+        <div class="score">⭐ 答對：<span id="score">0</span> 題</div>
     </div>
 
-    <div class="game-container">
-        <div class="question-box">
-            <span id="questionText">準備好未？</span>
-            <button class="speak-btn" onclick="speakQuestion()" title="再聽一次">🔊</button>
+    <p class="instruction" id="instruction"></p>
+
+    <div class="compass" id="compass">
+        <div class="dial">
+            <svg viewBox="0 0 100 100" aria-hidden="true">
+                <circle cx="50" cy="50" r="46" fill="none" stroke="#ffe3a3" stroke-width="1.5"/>
+                <g id="ticks" stroke="#c9a227" stroke-width="1.2"></g>
+                <g id="needle">
+                    <polygon points="50,14 45.5,50 54.5,50" fill="#e63946"/>
+                    <polygon points="50,86 45.5,50 54.5,50" fill="#94a3b8"/>
+                    <circle cx="50" cy="50" r="4" fill="#ffb703" stroke="#fff" stroke-width="1.5"/>
+                </g>
+            </svg>
         </div>
+        <div class="zone" data-pos="0" data-filled="0" tabindex="0" role="button" aria-label="上方位置">?</div>
+        <div class="zone" data-pos="1" data-filled="0" tabindex="0" role="button" aria-label="右方位置">?</div>
+        <div class="zone" data-pos="2" data-filled="0" tabindex="0" role="button" aria-label="下方位置">?</div>
+        <div class="zone" data-pos="3" data-filled="0" tabindex="0" role="button" aria-label="左方位置">?</div>
+    </div>
 
-        <div class="compass-grid">
-            <div class="cell empty"></div>
-            <div class="cell dir-btn" id="btn-N" onclick="checkAnswer('N')">
-                <span class="emoji" id="icon-N">❄️</span>
-                <span class="label" id="text-N">北</span>
-            </div>
-            <div class="cell empty"></div>
+    <div class="tray" id="tray"></div>
 
-            <div class="cell dir-btn" id="btn-W" onclick="checkAnswer('W')">
-                <span class="emoji" id="icon-W">🌅</span>
-                <span class="label" id="text-W">西</span>
-            </div>
-            <div class="cell center" id="centerCharacter">👦</div>
-            <div class="cell dir-btn" id="btn-E" onclick="checkAnswer('E')">
-                <span class="emoji" id="icon-E">☀️</span>
-                <span class="label" id="text-E">東</span>
-            </div>
+    <div class="msg" id="msg"></div>
+    <div class="tip">小提示：北同南相對，東同西相對。指南針嘅紅色針指向就係題目話你知嘅方向！</div>
 
-            <div class="cell empty"></div>
-            <div class="cell dir-btn" id="btn-S" onclick="checkAnswer('S')">
-                <span class="emoji" id="icon-S">🌴</span>
-                <span class="label" id="text-S">南</span>
-            </div>
-            <div class="cell empty"></div>
+    <div class="overlay" id="overlay">
+        <div class="win-card">
+            <div class="big">🎉🌟🎉</div>
+            <div class="text">好叻呀！全部啱晒！</div>
+            <button class="next-btn" id="nextBtn">下一題 ➜</button>
         </div>
-
-        <div class="feedback" id="feedback"></div>
     </div>
 
     <script>
-        let score = 0;
-        let streak = 0;
-        let currentTarget = '';
-        let currentQuestionText = '';
-        // 模式 0: 顯示文字+圖案, 模式 1: 隱藏方位文字(考記憶), 模式 2: 情景尋寶題
-        let gameMode = 0; 
-        let isWaiting = false;
+        var DIRS = ['北', '東', '南', '西'];           // 順時針
+        var COLORS = { '北': '#e63946', '東': '#2a9d8f', '南': '#f4a261', '西': '#457b9d' };
+        var PRAISE = ['啱啦！好嘢！👍', '答啱咗！叻仔仔叻女！🌟', '冇錯！繼續加油！💪'];
+        var WRONG = ['唔啱喎，再諗下！🤔', '差少少咋，再試下！', '諗清楚先，你可以嘅！'];
 
-        const directions = {
-            'N': { name: '北', fullName: '北方', emoji: '❄️', hint: '上面係北方' },
-            'S': { name: '南', fullName: '南方', emoji: '🌴', hint: '下面係南方' },
-            'E': { name: '東', fullName: '東方', emoji: '☀️', hint: '右邊係東方' },
-            'W': { name: '西', fullName: '西方', emoji: '🌅', hint: '左邊係西方' }
-        };
-
-        const treasureItems = [
-            { item: '🍎 蘋果', dir: 'N' },
-            { item: '🐶 狗仔', dir: 'S' },
-            { item: '🚀 火箭', dir: 'E' },
-            { item: '🍦 雪糕', dir: 'W' },
-            { item: '🦁 獅子', dir: 'N' },
-            { item: '🚗 車車', dir: 'S' },
-            { item: '⚽ 足球', dir: 'E' },
-            { item: '🍓 士多啤梨', dir: 'W' }
-        ];
-
-        const characters = ['👦', '👧', '🐻', '🐰', '🐼', '🦊'];
-
-        function speak(text) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'zh-HK';
-                utterance.rate = 0.95;
-                window.speechSynthesis.speak(utterance);
+        // 刻度
+        (function () {
+            var ticks = document.getElementById('ticks');
+            var html = '';
+            for (var i = 0; i < 12; i++) {
+                var a = i * 30 * Math.PI / 180;
+                var long = (i % 3 === 0);
+                var r1 = long ? 40 : 43, r2 = 46;
+                html += '<line x1="' + (50 + r1 * Math.sin(a)) + '" y1="' + (50 - r1 * Math.cos(a)) +
+                        '" x2="' + (50 + r2 * Math.sin(a)) + '" y2="' + (50 - r2 * Math.cos(a)) +
+                        '" stroke-width="' + (long ? 2 : 1) + '"/>';
             }
-        }
+            ticks.innerHTML = html;
+        })();
 
-        function speakQuestion() {
-            speak(currentQuestionText);
-        }
+        var zones = Array.prototype.slice.call(document.querySelectorAll('.zone'));
+        var tray = document.getElementById('tray');
+        var msg = document.getElementById('msg');
+        var scoreEl = document.getElementById('score');
+        var overlay = document.getElementById('overlay');
+        var nextBtn = document.getElementById('nextBtn');
+        var compass = document.getElementById('compass');
 
-        function toggleMode() {
-            gameMode = (gameMode + 1) % 3;
-            const btn = document.getElementById('modeBtn');
-            if (gameMode === 0) {
-                btn.innerText = '模式：初階（有字有圖）';
-            } else if (gameMode === 1) {
-                btn.innerText = '模式：進階（隱藏文字）';
-            } else {
-                btn.innerText = '模式：情景尋寶';
+        var givenDir = 0, givenPos = 0, expected = ['', '', '', ''];
+        var placed = 0, score = 0;
+        var selectedChip = null;
+
+        function rand(n) { return Math.floor(Math.random() * n); }
+
+        function shuffle(arr) {
+            for (var i = arr.length - 1; i > 0; i--) {
+                var j = rand(i + 1);
+                var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
             }
-            nextQuestion();
+            return arr;
         }
 
-        function updateBoardDisplay() {
-            const dirs = ['N', 'S', 'E', 'W'];
-            dirs.forEach(d => {
-                const iconEl = document.getElementById(`icon-${d}`);
-                const textEl = document.getElementById(`text-${d}`);
-                
-                if (gameMode === 0) {
-                    iconEl.innerText = directions[d].emoji;
-                    textEl.innerText = directions[d].name;
-                } else if (gameMode === 1) {
-                    iconEl.innerText = '❓';
-                    textEl.innerText = '';
-                } else if (gameMode === 2) {
-                    // 尋寶模式由 nextQuestion 決定圖案
-                    textEl.innerText = directions[d].name;
+        function setMsg(text, good) {
+            msg.textContent = text;
+            msg.className = good ? 'msg good' : 'msg';
+        }
+
+        function makeChip(dir) {
+            var chip = document.createElement('div');
+            chip.className = 'chip';
+            chip.dataset.dir = dir;
+            chip.textContent = dir;
+            chip.style.background = COLORS[dir];
+            chip.setAttribute('tabindex', '0');
+            chip.setAttribute('role', 'button');
+            chip.setAttribute('aria-label', '方向牌：' + dir);
+            attachDrag(chip);
+            chip.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleSelect(chip);
                 }
+            });
+            return chip;
+        }
+
+        function toggleSelect(chip) {
+            if (chip.classList.contains('locked')) return;
+            if (selectedChip === chip) {
+                chip.classList.remove('selected');
+                selectedChip = null;
+            } else {
+                if (selectedChip) selectedChip.classList.remove('selected');
+                selectedChip = chip;
+                chip.classList.add('selected');
+            }
+            updateArmed();
+        }
+
+        function updateArmed() {
+            zones.forEach(function (z) {
+                if (selectedChip && z.dataset.filled === '0') z.classList.add('armed');
+                else z.classList.remove('armed');
             });
         }
 
-        function nextQuestion() {
-            isWaiting = false;
-            document.getElementById('feedback').innerText = '';
-            document.getElementById('centerCharacter').innerText = 
+        function attachDrag(chip) {
+            var startX = 0, startY = 0, moved = false, dragging = false;
+
+            chip.addEventListener('pointerdown', function (e) {
+                if (chip.classList.contains('locked')) return;
+                e.preventDefault();
+                dragging = true;
+                moved = false;
+                startX = e.clientX;
+                startY = e.clientY;
+                chip.setPointerCapture(e.pointerId);
+                chip.classList.add('dragging');
+            });
+
+            chip.addEventListener('pointermove', function (e) {
+                if (!dragging) return;
+                var dx = e.clientX - startX;
+                var dy = e.clientY - startY;
+                if (Math.abs(dx) + Math.abs(dy) > 8) moved = true;
+                if (moved) chip.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+            });
+
+            chip.addEventListener('pointerup', function (e) {
+                if (!dragging) return;
+                dragging = false;
+                chip.classList.remove('dragging');
+                if (!moved) {
+                    chip.style.transform = '';
+                    toggleSelect(chip);
+                    return;
+                }
+                var zone = zoneAt(e.clientX, e.clientY);
+                if (zone) {
+                    attemptDrop(chip, zone);
+                } else {
+                    snapBack(chip);
+                }
+            });
+
+            chip.addEventListener('pointercancel', function () {
+                dragging = false;
+                chip.classList.remove('dragging');
+                snapBack(chip);
+            });
+        }
+
+        function zoneAt(x, y) {
+            for (var i = 0; i < zones.length; i++) {
+                var r = zones[i].getBoundingClientRect();
+                var pad = 10;
+                if (x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad) {
+                    return zones[i];
+                }
+            }
+            return null;
+        }
+
+        function snapBack(chip) {
+            chip.style.transform = '';
+        }
+
+        function attemptDrop(chip, zone) {
+            var pos = parseInt(zone.dataset.pos, 10);
+            if (zone.dataset.filled === '1') {
+                snapBack(chip);
+                setMsg('呢個位已經有方向喇！揀個空位啦！', false);
+                return;
+            }
+            if (chip.dataset.dir === expected[pos]) {
+                zone.appendChild(chip);
+                zone.dataset.filled = '1';
+                zone.classList.add('correct');
+                zone.textContent = '';
+                zone.appendChild(chip);
+                chip.style.transform = '';
+                chip.classList.add('locked');
+                chip.classList.remove('selected');
+                if (selectedChip === chip) selectedChip = null;
+                chip.setAttribute('aria-label', '已放好：' + chip.dataset.dir);
+                placed++;
+                setMsg(PRAISE[rand(PRAISE.length)], true);
+                updateArmed();
+                if (placed === 3) win();
+            } else {
+                zone.classList.add('wrong-flash');
+                setTimeout(function () { zone.classList.remove('wrong-flash'); }, 450);
+                chip.classList.add('shake');
+                setTimeout(function () { chip.classList.remove('shake'); }, 450);
+                snapBack(chip);
+                setMsg(WRONG[rand(WRONG.length)], false);
+            }
+        }
+
+        zones.forEach(function (zone) {
+            zone.addEventListener('click', function () {
+                if (selectedChip) attemptDrop(selectedChip, zone);
+            });
+            zone.addEventListener('keydown', function (e) {
+                if ((e.key === 'Enter' || e.key === ' ') && selectedChip) {
+                    e.preventDefault();
+                    attemptDrop(selectedChip, zone);
+                }
+            });
+        });
+
+        function win() {
+            score++;
+            scoreEl.textContent = score;
+            setTimeout(function () {
+                overlay.classList.add('show');
+                nextBtn.focus();
+                spawnConfetti();
+            }, 500);
+        }
+
+        function spawnConfetti() {
+            var icons = ['🎉', '⭐', '🌟', '🎊', '✨'];
+            for (var i = 0; i < 16; i++) {
+                var c = document.createElement('div');
+                c.className = 'confetti';
+                c.textContent = icons[rand(icons.length)];
+                c.style.left = rand(100) + 'vw';
+                c.style.animationDelay = (Math.random() * 0.8) + 's';
+                document.body.appendChild(c);
+                (function (el) {
+                    setTimeout(function () { el.remove(); }, 3600);
+                })(c);
+            }
+        }
+
+        function newRound() {
+            // 隨機：邊個方向做提示 + 提示放喺邊個位置（所以「北」唔一定向上）
+            givenDir = rand(4);
+            givenPos = rand(4);
+            for (var p = 0; p < 4; p++) {
+                expected[p] = DIRS[(givenDir + p - givenPos + 4) % 4];
+            }
+            compass.dataset.givenDir = DIRS[givenDir];
+            compass.dataset.givenPos = givenPos;
+
+            placed = 0;
+            selectedChip = null;
+            setMsg('', false);
+
+            // 指南針針轉向提示方向（0=上 90=右 180=下 270=左）
+            document.getElementById('needle').style.transform = 'rotate(' + (givenPos * 90) + 'deg)';
+
+            // 重設四個位置
+            zones.forEach(function (z) {
+                z.dataset.filled = '0';
+                z.classList.remove('correct', 'given-zone', 'armed');
+                z.innerHTML = '?';
+            });
+
+            // 放提示方向
+            var gz = zones[givenPos];
+            gz.dataset.filled = '1';
+            gz.classList.add('given-zone');
+            gz.innerHTML = '';
+            var g = document.createElement('div');
+            g.className = 'given-chip';
+            g.style.background = COLORS[DIRS[givenDir]];
+            g.innerHTML = '<span class="pin">📍</span>' + DIRS[givenDir];
+            gz.appendChild(g);
+
+            // 指示文字
+            document.getElementById('instruction').innerHTML =
+                '指南針話你知 <span class="dir-tag" style="background:' + COLORS[DIRS[givenDir]] + '">' +
+                DIRS[givenDir] + '</span> 喺邊，將其餘三個方向拖去正確位置！';
+
+            // 三塊方向牌（隨機次序）
+            tray.innerHTML = '';
+            var rest = DIRS.filter(function (d, i) { return i !== givenDir; });
+            shuffle(rest).forEach(function (d) {
+                tray.appendChild(makeChip(d));
+            });
+        }
+
+        nextBtn.addEventListener('click', function () {
+            overlay.classList.remove('show');
+            newRound();
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && overlay.classList.contains('show')) {
+                overlay.classList.remove('show');
+                newRound();
+            }
+        });
+
+        newRound();
+    </script>
+</body>
+</html>
