@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>身體方向公仔 - 頭北腳南（iPad 旋轉感應）</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: "Microsoft JhengHei", "PingFang HK", "Heiti TC", sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 16px;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+            align-items: stretch;
+            justify-content: center;
+        }
+        .panel {
+            flex: 1 1 340px;
+            max-width: 460px;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 24px;
+            padding: 24px 26px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        h1 {
+            margin: 0;
+            font-size: 26px;
+            color: #ff6b6b;
+        }
+        .intro {
+            margin: 0;
+            font-size: 18px;
+            color: #334155;
+            line-height: 1.6;
+        }
+        .mapping {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        .map-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f1f5f9;
+            border-radius: 14px;
+            padding: 10px 14px;
+            font-size: 19px;
+            font-weight: bold;
+            color: #334155;
+        }
+        .map-item .part {
+            font-size: 24px;
+        }
+        .dir-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 22px;
+            font-weight: bold;
+        }
+        .status {
+            border-radius: 16px;
+            padding: 14px 18px;
+            font-size: 19px;
+            font-weight: bold;
+            line-height: 1.55;
+            text-align: center;
+            transition: background 0.3s, color 0.3s;
+        }
+        .status.ok {
+            background: #e6f6f4;
+            color: #1d7a6f;
+            border: 2px solid #2a9d8f;
+        }
+        .status.warn {
+            background: #ffe5e8;
+            color: #c1121f;
+            border: 2px solid #e63946;
+        }
+        .sim-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .sim-label {
+            font-size: 15px;
+            color: #64748b;
+            width: 100%;
+        }
+        .sim-btn {
+            background: #4ecdc4;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #38b2a8;
+            transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+        }
+        .sim-btn:hover { background: #45b8b0; }
+        .sim-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 0 0 #38b2a8;
+        }
+        .sim-btn.auto {
+            background: #ffb703;
+            box-shadow: 0 3px 0 #d69a00;
+        }
+        .sim-btn.auto:hover { background: #f0aa00; }
+        .sim-btn:focus-visible {
+            outline: 3px solid #1d4ed8;
+            outline-offset: 2px;
+        }
+        .tip {
+            font-size: 14px;
+            color: #6b7280;
+            line-height: 1.6;
+            margin: 0;
+        }
+        .stage {
+            flex: 0 1 auto;
+            width: min(88vw, 420px);
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 24px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .rot {
+            width: 100%;
+            max-width: 360px;
+            transform: rotate(var(--ang, 0deg));
+            transition: transform 0.5s ease;
+        }
+        .rot svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .badge {
+            transform-box: fill-box;
+            transform-origin: center;
+            transform: rotate(calc(var(--ang, 0deg) * -1));
+            transition: transform 0.5s ease;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .rot, .badge { transition: none; }
+        }
+        @media (max-width: 760px) {
+            .panel { max-width: 100%; }
+            .stage { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="panel">
+            <h1>🧍 身體方向公仔</h1>
+            <p class="intro">我哋嘅身體就係一個活生生嘅指南針！記住下面嘅對應：</p>
+            <div class="mapping">
+                <div class="map-item"><span class="part">🗣️</span>頭<span style="color:#94a3b8">＝</span><span class="dir-badge" style="background:#e63946">北</span></div>
+                <div class="map-item"><span class="part">🦶</span>腳<span style="color:#94a3b8">＝</span><span class="dir-badge" style="background:#f4a261">南</span></div>
+                <div class="map-item"><span class="part">🤚</span>左手<span style="color:#94a3b8">＝</span><span class="dir-badge" style="background:#457b9d">西</span></div>
+                <div class="map-item"><span class="part">✋</span>右手<span style="color:#94a3b8">＝</span><span class="dir-badge" style="background:#2a9d8f">東</span></div>
+            </div>
+            <p class="intro" style="font-size:16px">公仔背住你，所以佢嘅左右手同你嘅左右手係同一方向。試下轉動你嘅 iPad，睇下公仔會點！</p>
+            <div class="status ok" id="orientStatus">正在感應 iPad 嘅方向…</div>
+            <div class="sim-row">
+                <span class="sim-label">老師示範用（冇感應器嘅電腦都可以模擬旋轉）：</span>
+                <button class="sim-btn" id="sim0">正放</button>
+                <button class="sim-btn" id="sim270">向左打橫</button>
+                <button class="sim-btn" id="sim180">倒轉</button>
+                <button class="sim-btn" id="sim90">向右打橫</button>
+                <button class="sim-btn auto" id="simAuto">用返 iPad 感應</button>
+            </div>
+            <p class="tip">小提示：如果轉動 iPad 公仔冇反應，請檢查 iPad 嘅「旋轉鎖定」係咪關咗，並且用 Safari 開呢一頁。睇方向嘅正確擺法：北向 mon 頂、南向 mon 底、西向左手邊、東向右手邊。</p>
+        </div>
+
+        <div class="stage">
+            <div class="rot" id="rot">
+                <svg viewBox="-28 -28 256 326" role="img" aria-label="人形公仔：頭係北、腳係南、左手係西、右手係東">
+                    <!-- 指南針圓環背景 -->
+                    <circle cx="100" cy="130" r="128" fill="#ffffff" stroke="#ffe3a3" stroke-width="4" stroke-dasharray="10 8"/>
+
+                    <!-- 公仔（背面角度） -->
+                    <!-- 手 -->
+                    <line x1="82" y1="98" x2="34" y2="124" stroke="#4ecdc4" stroke-width="17" stroke-linecap="round"/>
+                    <line x1="118" y1="98" x2="166" y2="124" stroke="#4ecdc4" stroke-width="17" stroke-linecap="round"/>
+                    <circle cx="30" cy="126" r="11" fill="#ffdfc4"/>
+                    <circle cx="170" cy="126" r="11" fill="#ffdfc4"/>
+                    <!-- 腳 -->
+                    <rect x="82" y="152" width="15" height="60" rx="7" fill="#457b9d"/>
+                    <rect x="103" y="152" width="15" height="60" rx="7" fill="#457b9d"/>
+                    <ellipse cx="89" cy="216" rx="13" ry="9" fill="#e63946"/>
+                    <ellipse cx="111" cy="216" rx="13" ry="9" fill="#e63946"/>
+                    <!-- 身 -->
+                    <rect x="72" y="80" width="56" height="78" rx="18" fill="#4ecdc4"/>
+                    <!-- 頭（背面：見到頭髮） -->
+                    <circle cx="74" cy="52" r="5" fill="#ffdfc4"/>
+                    <circle cx="126" cy="52" r="5" fill="#ffdfc4"/>
+                    <circle cx="100" cy="50" r="30" fill="#6b4f3a"/>
+                    <path d="M100 34 q6 -8 12 -2" stroke="#54392a" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+                    <!-- 方向標示（會跟公仔轉，但文字保持直立） -->
+                    <g class="badge" id="badgeN">
+                        <circle cx="100" cy="-6" r="17" fill="#e63946"/>
+                        <text x="100" y="1" text-anchor="middle" font-size="22" font-weight="bold" fill="#ffffff">北</text>
+                    </g>
+                    <g class="badge" id="badgeS">
+                        <circle cx="100" cy="266" r="17" fill="#f4a261"/>
+                        <text x="100" y="273" text-anchor="middle" font-size="22" font-weight="bold" fill="#ffffff">南</text>
+                    </g>
+                    <g class="badge" id="badgeW">
+                        <circle cx="-6" cy="126" r="17" fill="#457b9d"/>
+                        <text x="-6" y="133" text-anchor="middle" font-size="22" font-weight="bold" fill="#ffffff">西</text>
+                    </g>
+                    <g class="badge" id="badgeE">
+                        <circle cx="206" cy="126" r="17" fill="#2a9d8f"/>
+                        <text x="206" y="133" text-anchor="middle" font-size="22" font-weight="bold" fill="#ffffff">東</text>
+                    </g>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var rot = document.getElementById('rot');
+        var statusEl = document.getElementById('orientStatus');
+        var manualAngle = null;
+
+        var MSG = {
+            0:   { cls: 'ok',   text: '✅ 擺正咗！頭（北）向 mon 頂、腳（南）向 mon 底，呢個就係睇方向嘅正確擺法！' },
+            180: { cls: 'warn', text: '🙃 你倒轉咗個 mon！頭（北）而家向下、腳（南）向天。記住：北應該向 mon 頂，不如轉返正個 iPad！' },
+            90:  { cls: 'warn', text: '↔️ 你打橫咗個 mon！頭（北）而家向住右手邊。轉返直個 iPad，等北向返 mon 頂！' },
+            270: { cls: 'warn', text: '↔️ 你打橫咗個 mon！頭（北）而家向住左手邊。轉返直個 iPad，等北向返 mon 頂！' }
+        };
+
+        function sensorAngle() {
+            var a = 0;
+            if (window.screen && screen.orientation && typeof screen.orientation.angle === 'number') {
+                a = screen.orientation.angle;
+            } else if (typeof window.orientation === 'number') {
+                a = window.orientation;
+            }
+            a = Math.round(a / 90) * 90;
+            if (a < 0) a += 360;
+            return a % 360;
+        }
+
+        function apply(angle) {
+            rot.style.setProperty('--ang', angle + 'deg');
+            var m = MSG[angle];
+            statusEl.className = 'status ' + m.cls;
+            statusEl.textContent = m.text;
+        }
+
+        function fromSensor() {
+            if (manualAngle !== null) return;
+            apply(sensorAngle());
+        }
+
+        window.addEventListener('orientationchange', function () {
+            setTimeout(fromSensor, 120);
+        });
+        window.addEventListener('resize', fromSensor);
+        if (window.screen && screen.orientation && screen.orientation.addEventListener) {
+            screen.orientation.addEventListener('change', function () {
+                setTimeout(fromSensor, 120);
+            });
+        }
+
+        function sim(angle) {
+            manualAngle = angle;
+            apply(angle);
+        }
+        document.getElementById('sim0').addEventListener('click', function () { sim(0); });
+        document.getElementById('sim90').addEventListener('click', function () { sim(90); });
+        document.getElementById('sim180').addEventListener('click', function () { sim(180); });
+        document.getElementById('sim270').addEventListener('click', function () { sim(270); });
+        document.getElementById('simAuto').addEventListener('click', function () {
+            manualAngle = null;
+            apply(sensorAngle());
+        });
+
+        apply(sensorAngle());
+    </script>
+</body>
+</html>
