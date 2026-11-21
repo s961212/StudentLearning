@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>認識角 - 銳角、直角、鈍角</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: "Microsoft JhengHei", "PingFang HK", "Heiti TC", sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 16px;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            width: 100%;
+            max-width: 760px;
+            background: rgba(255, 255, 255, 0.92);
+            padding: 12px 24px;
+            border-radius: 20px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+            margin-bottom: 12px;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+        .score {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2a9d8f;
+        }
+        .tabs {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            max-width: 760px;
+            margin-bottom: 12px;
+        }
+        .tab {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.75);
+            color: #475569;
+            border: 3px solid transparent;
+            border-radius: 16px;
+            padding: 12px 10px;
+            font-size: 21px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            transition: background 0.2s, border-color 0.2s, transform 0.15s;
+        }
+        .tab:hover { background: #ffffff; }
+        .tab:active { transform: scale(0.98); }
+        .tab.active {
+            background: #4ecdc4;
+            color: #ffffff;
+            border-color: #38b2a8;
+        }
+        .tab:focus-visible {
+            outline: 3px solid #1d4ed8;
+            outline-offset: 2px;
+        }
+        .card {
+            width: 100%;
+            max-width: 760px;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 24px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            padding: 18px 22px 22px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .hint {
+            margin: 0;
+            font-size: 18px;
+            color: #334155;
+            text-align: center;
+            line-height: 1.55;
+        }
+        .stage {
+            width: 100%;
+            max-width: 520px;
+        }
+        .stage svg {
+            width: 100%;
+            height: auto;
+            display: block;
+            touch-action: none;
+        }
+        #learnStage svg { cursor: grab; }
+        #learnStage svg:active { cursor: grabbing; }
+        .type-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            min-height: 108px;
+            justify-content: center;
+        }
+        .type-name {
+            font-size: 40px;
+            font-weight: bold;
+            line-height: 1.2;
+            transition: color 0.2s;
+        }
+        .type-desc {
+            font-size: 19px;
+            color: #475569;
+            text-align: center;
+        }
+        .deg {
+            font-size: 17px;
+            color: #64748b;
+            font-weight: bold;
+        }
+        .options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            justify-content: center;
+        }
+        .opt-btn {
+            min-width: 130px;
+            border: none;
+            border-radius: 18px;
+            padding: 16px 26px;
+            font-size: 26px;
+            font-weight: bold;
+            color: #ffffff;
+            cursor: pointer;
+            box-shadow: 0 5px 0 rgba(0, 0, 0, 0.18);
+            transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
+        }
+        .opt-btn:hover { transform: translateY(-2px); }
+        .opt-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
+        }
+        .opt-btn:focus-visible {
+            outline: 3px solid #1d4ed8;
+            outline-offset: 2px;
+        }
+        .opt-btn[data-type="銳角"] { background: #457b9d; }
+        .opt-btn[data-type="直角"] { background: #2a9d8f; }
+        .opt-btn[data-type="鈍角"] { background: #f4a261; }
+        .opt-btn.shake {
+            animation: shake 0.4s ease;
+        }
+        .options.locked .opt-btn {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        .msg {
+            min-height: 32px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #e63946;
+            text-align: center;
+        }
+        .msg.good { color: #2a9d8f; }
+        .hidden { display: none !important; }
+        .tip {
+            font-size: 15px;
+            color: #6b7280;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 6px 14px;
+            border-radius: 12px;
+            margin-top: 12px;
+            text-align: center;
+            max-width: 760px;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .opt-btn.shake { animation: none; }
+        }
+        @media (max-width: 420px) {
+            .title { font-size: 20px; }
+            .score { font-size: 17px; }
+            .tab { font-size: 18px; }
+            .type-name { font-size: 34px; }
+            .opt-btn { min-width: 100px; padding: 14px 18px; font-size: 22px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">📐 認識角</div>
+        <div class="score">⭐ 答對：<span id="score">0</span> 題</div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" id="tabLearn">📖 學一學</button>
+        <button class="tab" id="tabQuiz">📝 考一考</button>
+    </div>
+
+    <!-- 第一部分：教學 -->
+    <div class="card" id="learnSec">
+        <p class="hint">用手指或者滑鼠<strong>拉动藍色圓點</strong>，睇下個角點樣變！</p>
+        <div class="stage" id="learnStage">
+            <svg viewBox="0 0 400 260" id="learnSvg" role="img" aria-label="可拖動嘅角">
+                <line x1="40" y1="210" x2="370" y2="210" stroke="#e2e8f0" stroke-width="3"/>
+                <line id="baseRay" x1="200" y1="210" x2="356" y2="210" stroke="#457b9d" stroke-width="6" stroke-linecap="round"/>
+                <path id="angleArc" fill="none" stroke="#ffb703" stroke-width="5" stroke-linecap="round"/>
+                <polyline id="rightMark" fill="none" stroke="#2a9d8f" stroke-width="4" stroke-linecap="round" points=""/>
+                <line id="moveRay" x1="200" y1="210" x2="200" y2="60" stroke="#ff6b6b" stroke-width="6" stroke-linecap="round"/>
+                <circle cx="200" cy="210" r="9" fill="#ffb703" stroke="#ffffff" stroke-width="3"/>
+                <circle id="handle" cx="200" cy="60" r="16" fill="#457b9d" stroke="#ffffff" stroke-width="4"/>
+                <text id="degLabel" x="262" y="150" font-size="20" font-weight="bold" fill="#64748b">90°</text>
+            </svg>
+        </div>
+        <div class="type-display">
+            <div class="type-name" id="typeName">直角</div>
+            <div class="type-desc" id="typeDesc">啱啱好 90°，好似牆角、書角咁，方方正正 📏</div>
+            <div class="deg" id="degText">而家個角係 90°</div>
+        </div>
+    </div>
+
+    <!-- 第二部分：考驗 -->
+    <div class="card hidden" id="quizSec">
+        <p class="hint">睇下下面呢個角，佢係<strong>邊一種角</strong>？</p>
+        <div class="stage" id="quizStage">
+            <svg viewBox="0 0 400 260" role="img" aria-label="題目嘅角">
+                <line x1="40" y1="210" x2="370" y2="210" stroke="#e2e8f0" stroke-width="3"/>
+                <line x1="200" y1="210" x2="356" y2="210" stroke="#457b9d" stroke-width="6" stroke-linecap="round"/>
+                <path id="quizArc" fill="none" stroke="#ffb703" stroke-width="5" stroke-linecap="round"/>
+                <polyline id="quizRightMark" fill="none" stroke="#2a9d8f" stroke-width="4" stroke-linecap="round" points="" style="display:none"/>
+                <line id="quizRay" x1="200" y1="210" x2="200" y2="60" stroke="#ff6b6b" stroke-width="6" stroke-linecap="round"/>
+                <circle cx="200" cy="210" r="9" fill="#ffb703" stroke="#ffffff" stroke-width="3"/>
+            </svg>
+        </div>
+        <div class="options" id="options">
+            <button class="opt-btn" data-type="銳角">銳角</button>
+            <button class="opt-btn" data-type="直角">直角</button>
+            <button class="opt-btn" data-type="鈍角">鈍角</button>
+        </div>
+        <div class="msg" id="quizMsg"></div>
+    </div>
+
+    <div class="tip">小知識：銳角細過直角（尖尖哋），直角啱啱好 90°，鈍角大過直角（開落落）。</div>
+
+    <script>
+        var VX = 200, VY = 210, RAY = 156, ARC_R = 46;
+        var TYPES = {
+            '銳角': { color: '#457b9d', desc: '細過 90°，尖尖哋，好似雀仔把嘴咁 🐦' },
+            '直角': { color: '#2a9d8f', desc: '啱啱好 90°，好似牆角、書角咁，方方正正 📏' },
+            '鈍角': { color: '#f4a261', desc: '大過 90°，開落落，好似打開嘅書本咁 📖' }
+        };
+        var PRAISE = ['啱啦！好叻！👍', '答啱咗！🌟', '冇錯！繼續加油！💪', '好嘢！🎉'];
+        var WRONG = ['唔啱喎，再揀過！🤔', '諗下先：佢尖過直角定闊過直角？', '差少少，再試下！'];
+
+        function rad(deg) { return deg * Math.PI / 180; }
+        function rayEnd(deg, len) {
+            return { x: VX + len * Math.cos(rad(deg)), y: VY - len * Math.sin(rad(deg)) };
+        }
+        function classify(deg) {
+            if (deg === 90) return '直角';
+            return deg < 90 ? '銳角' : '鈍角';
+        }
+        function rand(min, max) { return min + Math.floor(Math.random() * (max - min + 1)); }
+        function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+        /* ---------- 畫角 ---------- */
+        function drawAngle(els, deg) {
+            var end = rayEnd(deg, RAY);
+            els.ray.setAttribute('x2', end.x);
+            els.ray.setAttribute('y2', end.y);
+            var a0 = rayEnd(0, ARC_R), a1 = rayEnd(deg, ARC_R);
+            els.arc.setAttribute('d', 'M ' + a0.x + ' ' + a0.y + ' A ' + ARC_R + ' ' + ARC_R + ' 0 0 0 ' + a1.x + ' ' + a1.y);
+            if (deg === 90) {
+                els.mark.setAttribute('points', (VX + 16) + ',' + VY + ' ' + (VX + 16) + ',' + (VY - 16) + ' ' + VX + ',' + (VY - 16));
+            } else {
+                els.mark.setAttribute('points', '');
+            }
+            if (els.handle) {
+                els.handle.setAttribute('cx', end.x);
+                els.handle.setAttribute('cy', end.y);
+            }
+            if (els.degLabel) {
+                var mid = rayEnd(deg / 2, ARC_R + 30);
+                els.degLabel.setAttribute('x', mid.x - 14);
+                els.degLabel.setAttribute('y', mid.y + 6);
+                els.degLabel.textContent = deg + '°';
+            }
+        }
+
+        /* ---------- 第一部分：學一學 ---------- */
+        var learnSvg = document.getElementById('learnSvg');
+        var learnEls = {
+            ray: document.getElementById('moveRay'),
+            arc: document.getElementById('angleArc'),
+            mark: document.getElementById('rightMark'),
+            handle: document.getElementById('handle'),
+            degLabel: document.getElementById('degLabel')
+        };
+        var typeName = document.getElementById('typeName');
+        var typeDesc = document.getElementById('typeDesc');
+        var degText = document.getElementById('degText');
+        var learnStage = document.getElementById('learnStage');
+
+        function setLearnAngle(deg) {
+            deg = Math.round(Math.max(5, Math.min(175, deg)));
+            if (Math.abs(deg - 90) <= 3) deg = 90;   // 吸埋去直角
+            drawAngle(learnEls, deg);
+            var t = classify(deg);
+            typeName.textContent = t;
+            typeName.style.color = TYPES[t].color;
+            typeDesc.textContent = TYPES[t].desc;
+            degText.textContent = '而家個角係 ' + deg + '°';
+            learnStage.dataset.angle = deg;
+            learnStage.dataset.type = t;
+        }
+
+        var dragging = false;
+        function pointerAngle(e) {
+            var rect = learnSvg.getBoundingClientRect();
+            var x = (e.clientX - rect.left) * (400 / rect.width);
+            var y = (e.clientY - rect.top) * (260 / rect.height);
+            var dx = x - VX, dy = VY - y;
+            if (dy < 0) return dx >= 0 ? 0 : 180;
+            var deg = Math.atan2(dy, dx) * 180 / Math.PI;
+            return Math.max(0, Math.min(180, deg));
+        }
+        learnSvg.addEventListener('pointerdown', function (e) {
+            e.preventDefault();
+            dragging = true;
+            learnSvg.setPointerCapture(e.pointerId);
+            setLearnAngle(pointerAngle(e));
+        });
+        learnSvg.addEventListener('pointermove', function (e) {
+            if (dragging) setLearnAngle(pointerAngle(e));
+        });
+        learnSvg.addEventListener('pointerup', function () { dragging = false; });
+        learnSvg.addEventListener('pointercancel', function () { dragging = false; });
+
+        setLearnAngle(90);
+
+        /* ---------- 第二部分：考一考 ---------- */
+        var quizEls = {
+            ray: document.getElementById('quizRay'),
+            arc: document.getElementById('quizArc'),
+            mark: { setAttribute: function () {} }   // 考驗模式唔畫直角符號，等小朋友自己判斷
+        };
+        var quizStage = document.getElementById('quizStage');
+        var quizMsg = document.getElementById('quizMsg');
+        var options = document.getElementById('options');
+        var scoreEl = document.getElementById('score');
+        var score = 0;
+        var quizAnswer = '';
+
+        function newQuestion() {
+            var type = pick(['銳角', '直角', '鈍角']);
+            var deg;
+            if (type === '銳角') deg = rand(25, 75);
+            else if (type === '直角') deg = 90;
+            else deg = rand(105, 165);
+            quizAnswer = type;
+            drawAngle(quizEls, deg);
+            quizStage.dataset.answer = type;
+            quizStage.dataset.angle = deg;
+            quizMsg.textContent = '';
+            options.classList.remove('locked');
+        }
+
+        options.querySelectorAll('.opt-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                if (options.classList.contains('locked')) return;
+                if (btn.dataset.type === quizAnswer) {
+                    score++;
+                    scoreEl.textContent = score;
+                    quizMsg.textContent = pick(PRAISE);
+                    quizMsg.className = 'msg good';
+                    options.classList.add('locked');
+                    setTimeout(newQuestion, 1200);
+                } else {
+                    btn.classList.add('shake');
+                    setTimeout(function () { btn.classList.remove('shake'); }, 450);
+                    quizMsg.textContent = pick(WRONG);
+                    quizMsg.className = 'msg';
+                }
+            });
+        });
+
+        /* ---------- 模式切換 ---------- */
+        var tabLearn = document.getElementById('tabLearn');
+        var tabQuiz = document.getElementById('tabQuiz');
+        var learnSec = document.getElementById('learnSec');
+        var quizSec = document.getElementById('quizSec');
+
+        function setMode(mode) {
+            var learn = (mode === 'learn');
+            tabLearn.classList.toggle('active', learn);
+            tabQuiz.classList.toggle('active', !learn);
+            learnSec.classList.toggle('hidden', !learn);
+            quizSec.classList.toggle('hidden', learn);
+            if (!learn && !quizStage.dataset.answer) newQuestion();
+        }
+        tabLearn.addEventListener('click', function () { setMode('learn'); });
+        tabQuiz.addEventListener('click', function () { setMode('quiz'); });
+    </script>
+</body>
+</html>
