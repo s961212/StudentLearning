@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小學生自訂識字訓練 App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
+            text-align: center;
+            padding: 30px 15px;
+        }
+        .container {
+            background: white;
+            max-width: 550px;
+            margin: 0 auto;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            font-size: 24px;
+            margin-top: 0;
+        }
+        .target-word {
+            font-size: 90px;
+            color: #2c3e50;
+            margin: 15px 0;
+            font-weight: bold;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            transition: 0.2s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #mic-btn {
+            background-color: #e74c3c;
+        }
+        #mic-btn:hover {
+            background-color: #c0392b;
+        }
+        .btn-settings {
+            background-color: #7f8c8d;
+        }
+        .result {
+            font-size: 20px;
+            margin-top: 15px;
+            font-weight: bold;
+            min-height: 30px;
+        }
+        .correct { color: #27ae60; }
+        .incorrect { color: #c0392b; }
+        .score {
+            font-size: 16px;
+            color: #7f8c8d;
+            margin-top: 10px;
+        }
+        /* 設定區域樣式 */
+        .settings-panel {
+            background-color: #f9f9f9;
+            border: 1px dashed #ccc;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 25px;
+            text-align: left;
+        }
+        .settings-panel h3 {
+            margin-top: 0;
+            color: #34495e;
+            font-size: 18px;
+        }
+        textarea {
+            width: 100%;
+            height: 80px;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            font-size: 16px;
+            resize: vertical;
+        }
+        .hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🎯 小朋友認字訓練</h1>
+    <div class="score">進度：第 <span id="current-index">0</span> 題 / 共 <span id="total-words">0</span> 題</div>
+    
+    <!-- 目標字詞顯示 -->
+    <div class="target-word" id="target-display">--</div>
+    
+    <!-- 操作按鈕 -->
+    <div>
+        <button onclick="playPromptOnly()">🔊 聽提示音</button>
+        <button id="mic-btn" onclick="startListening()">🎤 讀呢個字</button>
+    </div>
+
+    <!-- 結果反饋 -->
+    <div class="result" id="result-text">請設定字庫或開始練習</div>
+
+    <!-- 自訂字庫設定區 -->
+    <div class="settings-panel">
+        <h3>⚙️ 家長/老師設定字庫</h3>
+        <label for="word-input">請輸入要訓練嘅中文字或詞語（用逗號、空格或換行隔開）：</label>
+        <textarea id="word-input" placeholder="例如：蘋果, 學校, 太陽, 聰明, 學習"></textarea>
+        <div class="hint">💡 更改後請點擊「儲存並更新字庫」。系統會自動記住你的設定！</div>
+        <div style="text-align: right; margin-top: 10px;">
+            <button class="btn-settings" onclick="saveCustomWords()">💾 儲存並更新字庫</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 預設字庫
+    const defaultWords = ["蘋果", "學校", "太陽", "開心", "書包"];
+    let words = [];
+    let currentIndex = 0;
+
+    const targetDisplay = document.getElementById("target-display");
+    const resultText = document.getElementById("result-text");
+    const currentIndexSpan = document.getElementById("current-index");
+    const totalWordsSpan = document.getElementById("total-words");
+    const wordInput = document.getElementById("word-input");
+
+    // 初始化：載入舊儲存嘅字庫或預設字庫
+    function initWords() {
+        const savedWords = localStorage.getItem("custom_vocab_list");
+        if (savedWords) {
+            words = JSON.parse(savedWords);
+            wordInput.value = words.join(", ");
+        } else {
+            words = defaultWords;
+            wordInput.value = defaultWords.join(", ");
+        }
+        currentIndex = 0;
+        updateWordUI(false);
+    }
+
+    // 儲存使用者自訂嘅字庫
+    function saveCustomWords() {
+        const rawText = wordInput.value;
+        const parsedWords = rawText.split(/[,，\s\n]+/).map(w => w.trim()).filter(w => w.length > 0);
+
+        if (parsedWords.length === 0) {
+            alert("請至少輸入一個中文字或詞語！");
+            return;
+        }
+
+        words = parsedWords;
+        localStorage.setItem("custom_vocab_list", JSON.stringify(words));
+        currentIndex = 0;
+        updateWordUI(true);
+        alert("✅ 字庫更新成功！已儲存 " + words.length + " 個字詞。");
+    }
+
+    // 更新介面並播放提示語音
+    function updateWordUI(autoPlayPrompt = true) {
+        if (words.length === 0) {
+            targetDisplay.innerText = "無資料";
+            currentIndexSpan.innerText = 0;
+            totalWordsSpan.innerText = 0;
+            return;
+        }
+        
+        targetDisplay.innerText = words[currentIndex];
+        currentIndexSpan.innerText = currentIndex + 1;
+        totalWordsSpan.innerText = words.length;
+        resultText.innerText = "請按下咪高峰讀出上面嘅字";
+        resultText.className = "result";
+
+        if (autoPlayPrompt) {
+            playPromptOnly();
+        }
+    }
+
+    // 只讀到「請小朋友讀出下面嘅詞語」
+    function playPromptOnly() {
+        if (words.length === 0) return;
+        
+        window.speechSynthesis.cancel();
+
+        const promptSpeech = new SpeechSynthesisUtterance("請小朋友讀出下面嘅詞語");
+        promptSpeech.lang = 'zh-HK'; 
+        promptSpeech.rate = 0.85;
+
+        window.speechSynthesis.speak(promptSpeech);
+    }
+
+    // 答對時專用的語音反饋：「答啱喇，我哋讀下一個字」
+    function speakCorrectFeedback() {
+        window.speechSynthesis.cancel();
+
+        const speech = new SpeechSynthesisUtterance("答啱喇，我哋讀下一個字！");
+        speech.lang = 'zh-HK';
+        speech.rate = 0.85;
+
+        // 當語音講完「我哋讀下一個字」之後，才真正切換去下一個字並播放提示音
+        speech.onend = function() {
+            currentIndex = (currentIndex + 1) % words.length;
+            updateWordUI(true);
+        };
+
+        window.speechSynthesis.speak(speech);
+    }
+
+    // 答錯時專用的語音反饋
+    function speakIncorrectFeedback(userSaid) {
+        window.speechSynthesis.cancel();
+
+        const feedbackText = `唔啱呀，你剛才讀咗，${userSaid}，再試一次啦！`;
+        const speech = new SpeechSynthesisUtterance(feedbackText);
+        speech.lang = 'zh-HK';
+        speech.rate = 0.85;
+
+        window.speechSynthesis.speak(speech);
+    }
+
+    // 2. 語音識別（Speech Recognition）：辨識小朋友發音
+    function startListening() {
+        if (words.length === 0) return;
+
+        window.speechSynthesis.cancel();
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("抱歉，你目前使用的瀏覽器不支援語音識別功能，建議使用 Google Chrome 瀏覽器。");
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'zh-HK'; 
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        resultText.innerText = "🗣️ 聆聽中... 請讀出嚟！";
+        resultText.className = "result";
+
+        recognition.start();
+
+        recognition.onresult = function(event) {
+            const speechResult = event.results[0][0].transcript.trim();
+            const targetWord = words[currentIndex];
+
+            const cleanedResult = speechResult.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()？，。！]/g,"");
+
+            if (cleanedResult.includes(targetWord)) {
+                resultText.innerHTML = `✅ 答對喇！你讀咗：「${cleanedResult}」`;
+                resultText.className = "result correct";
+
+                // 播放答對語音，語音結束後自動轉去下一個字
+                speakCorrectFeedback();
+            } else {
+                resultText.innerHTML = `❌ 唔啱啊，你剛才讀咗：「${cleanedResult}」，再試一次啦！`;
+                resultText.className = "result incorrect";
+                
+                // 播放答錯語音
+                speakIncorrectFeedback(cleanedResult);
+            }
+        };
+
+        recognition.onerror = function(event) {
+            resultText.innerText = "⚠️ 聽唔清楚，請再試一次。";
+            resultText.className = "result incorrect";
+            
+            const errorSpeech = new SpeechSynthesisUtterance("聽唔清楚，請再試一次。");
+            errorSpeech.lang = 'zh-HK';
+            window.speechSynthesis.speak(errorSpeech);
+        };
+    }
+
+    // 初始化
+    initWords();
+</script>
+
+</body>
+</html>
