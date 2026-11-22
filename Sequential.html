@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>順數與倒數 - 數字序列練習</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: "Microsoft JhengHei", "PingFang HK", "Heiti TC", sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 16px;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            width: 100%;
+            max-width: 760px;
+            background: rgba(255, 255, 255, 0.92);
+            padding: 12px 24px;
+            border-radius: 20px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+            margin-bottom: 12px;
+        }
+        .head-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .teach-toggle {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            color: #475569;
+            background: #f1f5f9;
+            border-radius: 999px;
+            padding: 6px 12px;
+        }
+        .teach-toggle input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .teach-toggle .track {
+            width: 38px;
+            height: 22px;
+            border-radius: 999px;
+            background: #cbd5e1;
+            position: relative;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        .teach-toggle .track::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+            transition: transform 0.2s;
+        }
+        .teach-toggle input:checked + .track {
+            background: #2a9d8f;
+        }
+        .teach-toggle input:checked + .track::after {
+            transform: translateX(16px);
+        }
+        .teach-toggle input:focus-visible + .track {
+            outline: 3px solid #1d4ed8;
+            outline-offset: 2px;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+        .score {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2a9d8f;
+        }
+        .card {
+            width: 100%;
+            max-width: 760px;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 24px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            padding: 20px 22px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+        }
+        .mode-banner {
+            font-size: 22px;
+            font-weight: bold;
+            padding: 8px 22px;
+            border-radius: 14px;
+            color: #ffffff;
+            background: #457b9d;
+        }
+        .mode-banner.desc {
+            background: #f4a261;
+        }
+        .teach-banner {
+            display: none;
+            font-size: 18px;
+            font-weight: bold;
+            color: #1d7a6f;
+            background: #e6f6f4;
+            border: 2px solid #2a9d8f;
+            border-radius: 14px;
+            padding: 8px 18px;
+            text-align: center;
+            line-height: 1.5;
+        }
+        body.teaching .teach-banner { display: block; }
+        .boxes {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            width: 100%;
+            max-width: 640px;
+        }
+        .box-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .hint-badge {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            min-width: 46px;
+            padding: 2px 10px;
+            border-radius: 999px;
+            background: #ffb703;
+            color: #7c2d12;
+            font-size: 17px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
+        }
+        body.teaching .hint-badge { display: flex; }
+        .box {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            max-height: 86px;
+            border-radius: 16px;
+            border: 3px dashed #94a3b8;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 34px;
+            font-weight: bold;
+            color: #1e293b;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s, transform 0.15s;
+        }
+        .box.given {
+            border-style: solid;
+            border-color: #457b9d;
+            background: #e8f1f8;
+            color: #1d4ed8;
+            cursor: default;
+        }
+        .box.selected {
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 5px rgba(255, 107, 107, 0.25);
+            transform: scale(1.05);
+        }
+        .box.done {
+            border-style: solid;
+            border-color: #2a9d8f;
+            background: #e6f6f4;
+            color: #1d7a6f;
+            cursor: default;
+        }
+        .box.wrong {
+            border-color: #e63946;
+            background: #ffe5e8;
+            animation: shake 0.4s ease;
+        }
+        .box:focus-visible {
+            outline: 3px solid #1d4ed8;
+            outline-offset: 2px;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-7px); }
+            75% { transform: translateX(7px); }
+        }
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(86px, 110px));
+            gap: 10px;
+            justify-content: center;
+        }
+        .num-btn {
+            border: none;
+            border-radius: 16px;
+            padding: 14px 0;
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffffff;
+            background: #4ecdc4;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #38b2a8;
+            transition: transform 0.12s, box-shadow 0.12s, background 0.15s;
+        }
+        .num-btn:hover { background: #45b8b0; }
+        .num-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #38b2a8;
+        }
+        .num-btn.del {
+            background: #f4a261;
+            box-shadow: 0 4px 0 #d67f2e;
+        }
+        .num-btn.del:hover { background: #e8934d; }
+        .num-btn.skip {
+            background: #457b9d;
+            box-shadow: 0 4px 0 #335e78;
+            font-size: 20px;
+        }
+        .num-btn.skip:hover { background: #3c6d8c; }
+        .num-btn:focus-visible {
+            outline: 3px solid #1d4ed8;
+            outline-offset: 2px;
+        }
+        .msg {
+            min-height: 32px;
+            font-size: 21px;
+            font-weight: bold;
+            color: #e63946;
+            text-align: center;
+        }
+        .msg.good { color: #2a9d8f; }
+        .tip {
+            font-size: 15px;
+            color: #6b7280;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 6px 14px;
+            border-radius: 12px;
+            margin-top: 12px;
+            text-align: center;
+            max-width: 760px;
+        }
+        .confetti {
+            position: fixed;
+            top: -30px;
+            font-size: 26px;
+            pointer-events: none;
+            z-index: 101;
+            animation: fall 2.6s linear forwards;
+        }
+        @keyframes fall {
+            to { transform: translateY(110vh) rotate(360deg); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .box.wrong { animation: none; }
+            .confetti { display: none; }
+        }
+        @media (max-width: 520px) {
+            .boxes { grid-template-columns: repeat(3, 1fr); max-width: 340px; }
+            .title { font-size: 20px; }
+            .score { font-size: 17px; }
+            .box { font-size: 28px; }
+            .mode-banner { font-size: 19px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="head-left">
+            <label class="teach-toggle">
+                <input type="checkbox" id="teachToggle">
+                <span class="track"></span>
+                <span>教學模式</span>
+            </label>
+            <div class="title">🔢 順數與倒數</div>
+        </div>
+        <div class="score">⭐ 答對：<span id="score">0</span> 題</div>
+    </div>
+
+    <div class="card">
+        <div class="mode-banner" id="modeBanner">順數 ➡️ 小至大</div>
+        <div class="teach-banner" id="teachBanner"></div>
+        <div class="boxes" id="boxes"></div>
+        <div class="numpad" id="numpad">
+            <button class="num-btn" data-digit="1">1</button>
+            <button class="num-btn" data-digit="2">2</button>
+            <button class="num-btn" data-digit="3">3</button>
+            <button class="num-btn" data-digit="4">4</button>
+            <button class="num-btn" data-digit="5">5</button>
+            <button class="num-btn" data-digit="6">6</button>
+            <button class="num-btn" data-digit="7">7</button>
+            <button class="num-btn" data-digit="8">8</button>
+            <button class="num-btn" data-digit="9">9</button>
+            <button class="num-btn del" id="delBtn">⌫</button>
+            <button class="num-btn" data-digit="0">0</button>
+            <button class="num-btn skip" id="skipBtn">換一題</button>
+        </div>
+        <div class="msg" id="msg">撳一個空格，再用下面嘅數字鍵填答案！</div>
+    </div>
+
+    <div class="tip">小知識：順數係由小至大數，每個數字大前一個 1；倒數係由大至細數，每個數字細前一個 1。</div>
+
+    <script>
+        var boxesEl = document.getElementById('boxes');
+        var msg = document.getElementById('msg');
+        var scoreEl = document.getElementById('score');
+        var modeBanner = document.getElementById('modeBanner');
+        var teachBanner = document.getElementById('teachBanner');
+        var teachToggle = document.getElementById('teachToggle');
+
+        var PRAISE = ['全部啱晒！好叻呀！🎉', '答啱啱咗！🌟', '冇錯！繼續加油！💪', '好嘢！👍'];
+        var WRONG = ['唔啱喎，再諗下！🤔', '差少少咋，再試下！', '諗下：同隔籬嗰個數相差幾多？'];
+        var TEACH_TEXT = {
+            up: '教學模式：順數係由小至大數，每個數字比前一個大 1，所以空格上面係「+1」。',
+            down: '教學模式：倒數係由大至細數，每個數字比前一個細 1，所以空格上面係「−1」。'
+        };
+
+        var seq = [];          // 6 個正確數字
+        var givens = [];       // 邊幾個位已經填好
+        var direction = 'up';  // up = 順數, down = 倒數
+        var selected = null;
+        var score = 0;
+
+        function rand(min, max) { return min + Math.floor(Math.random() * (max - min + 1)); }
+        function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+        function setMsg(text, good) {
+            msg.textContent = text;
+            msg.className = good ? 'msg good' : 'msg';
+        }
+
+        function newQuestion() {
+            direction = pick(['up', 'down']);
+            var twoDigit = Math.random() < 0.5;   // 個位數同雙位數唔會溝住用
+            var start, i;
+            if (!twoDigit) {
+                start = (direction === 'up') ? rand(1, 4) : rand(6, 9);
+            } else {
+                start = (direction === 'up') ? rand(10, 93) : rand(15, 99);
+            }
+            seq = [];
+            for (i = 0; i < 6; i++) {
+                seq.push(direction === 'up' ? start + i : start - i);
+            }
+
+            // 隨機 2-3 個位填好（可連續可唔連續）
+            var positions = [0, 1, 2, 3, 4, 5];
+            for (i = positions.length - 1; i > 0; i--) {
+                var j = rand(0, i);
+                var t = positions[i]; positions[i] = positions[j]; positions[j] = t;
+            }
+            givens = positions.slice(0, rand(2, 3)).sort(function (a, b) { return a - b; });
+
+            modeBanner.textContent = (direction === 'up') ? '順數 ➡️ 小至大' : '倒數 ➡️ 大至細';
+            modeBanner.className = 'mode-banner' + (direction === 'up' ? '' : ' desc');
+            teachBanner.textContent = TEACH_TEXT[direction];
+
+            renderBoxes();
+            setMsg('撳一個空格，再用下面嘅數字鍵填答案！', false);
+            selectFirstBlank();
+        }
+
+        function renderBoxes() {
+            boxesEl.innerHTML = '';
+            var step = (direction === 'up') ? '+1' : '−1';
+            for (var i = 0; i < 6; i++) {
+                var wrap = document.createElement('div');
+                wrap.className = 'box-wrap';
+
+                var badge = document.createElement('div');
+                badge.className = 'hint-badge';
+                if (givens.indexOf(i) === -1) {
+                    badge.textContent = step;
+                } else {
+                    badge.innerHTML = '&nbsp;';
+                    badge.style.visibility = 'hidden';
+                }
+                wrap.appendChild(badge);
+
+                var box = document.createElement('div');
+                box.className = 'box';
+                box.dataset.pos = i;
+                box.setAttribute('tabindex', '0');
+                box.setAttribute('role', 'button');
+                if (givens.indexOf(i) !== -1) {
+                    box.classList.add('given');
+                    box.textContent = seq[i];
+                    box.setAttribute('aria-label', '已經填好：' + seq[i]);
+                } else {
+                    box.dataset.answer = seq[i];
+                    box.setAttribute('aria-label', '空格，第 ' + (i + 1) + ' 個位');
+                    box.addEventListener('click', function () { selectBox(this); });
+                    box.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            selectBox(this);
+                        }
+                    });
+                }
+                wrap.appendChild(box);
+                boxesEl.appendChild(wrap);
+            }
+        }
+
+        function selectBox(box) {
+            if (box.classList.contains('done')) return;
+            if (selected) selected.classList.remove('selected');
+            selected = box;
+            box.classList.add('selected');
+            box.focus();
+        }
+
+        function selectFirstBlank() {
+            var blanks = boxesEl.querySelectorAll('.box:not(.given):not(.done)');
+            if (blanks.length) selectBox(blanks[0]);
+        }
+
+        function selectNextBlank() {
+            var blanks = boxesEl.querySelectorAll('.box:not(.given):not(.done)');
+            if (blanks.length) {
+                selectBox(blanks[0]);
+            } else {
+                selected = null;
+                win();
+            }
+        }
+
+        function pressDigit(d) {
+            if (!selected) {
+                setMsg('先撿一個空格啦！👆', false);
+                return;
+            }
+            var ans = selected.dataset.answer;
+            var cur = selected.textContent;
+            if (cur.length >= ans.length) return;
+            cur += d;
+            selected.textContent = cur;
+            if (cur.length === ans.length) {
+                if (cur === ans) {
+                    selected.classList.remove('selected', 'wrong');
+                    selected.classList.add('done');
+                    selected.setAttribute('aria-label', '答啱咗：' + ans);
+                    setMsg(pick(['啱啦！👍', '冇錯！🌟', '好嘢！']), true);
+                    selectNextBlank();
+                } else {
+                    selected.classList.add('wrong');
+                    setMsg(pick(WRONG), false);
+                    var box = selected;
+                    setTimeout(function () {
+                        box.classList.remove('wrong');
+                        box.textContent = '';
+                    }, 450);
+                }
+            }
+        }
+
+        function pressDel() {
+            if (selected && !selected.classList.contains('done')) {
+                selected.textContent = selected.textContent.slice(0, -1);
+            }
+        }
+
+        function win() {
+            score++;
+            scoreEl.textContent = score;
+            setMsg(pick(PRAISE), true);
+            spawnConfetti();
+            setTimeout(newQuestion, 1600);
+        }
+
+        function spawnConfetti() {
+            var icons = ['🎉', '⭐', '🌟', '🎊', '✨'];
+            for (var i = 0; i < 14; i++) {
+                var c = document.createElement('div');
+                c.className = 'confetti';
+                c.textContent = icons[Math.floor(Math.random() * icons.length)];
+                c.style.left = Math.floor(Math.random() * 100) + 'vw';
+                c.style.animationDelay = (Math.random() * 0.8) + 's';
+                document.body.appendChild(c);
+                (function (el) {
+                    setTimeout(function () { el.remove(); }, 3600);
+                })(c);
+            }
+        }
+
+        document.getElementById('numpad').addEventListener('click', function (e) {
+            var btn = e.target.closest('.num-btn');
+            if (!btn) return;
+            if (btn.dataset.digit !== undefined) pressDigit(btn.dataset.digit);
+        });
+        document.getElementById('delBtn').addEventListener('click', pressDel);
+        document.getElementById('skipBtn').addEventListener('click', newQuestion);
+
+        // 教學模式開關（記住選擇）
+        var teaching = false;
+        try {
+            var stored = localStorage.getItem('seq_teaching');
+            if (stored !== null) teaching = (stored === '1');
+        } catch (e) {}
+        function applyTeachPref() {
+            document.body.classList.toggle('teaching', teaching);
+            teachToggle.checked = teaching;
+        }
+        teachToggle.addEventListener('change', function () {
+            teaching = teachToggle.checked;
+            try { localStorage.setItem('seq_teaching', teaching ? '1' : '0'); } catch (e) {}
+            applyTeachPref();
+        });
+        applyTeachPref();
+
+        newQuestion();
+    </script>
+</body>
+</html>
