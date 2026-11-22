@@ -88,6 +88,25 @@
             outline: 3px solid #1d4ed8;
             outline-offset: 2px;
         }
+        .teach-toggle.disabled {
+            opacity: 0.45;
+            pointer-events: none;
+        }
+        body.hide-tens .box .tens {
+            color: #b9c6d6;
+        }
+        .tens-banner {
+            display: none;
+            font-size: 18px;
+            font-weight: bold;
+            color: #92600a;
+            background: #fff8e6;
+            border: 2px solid #ffb703;
+            border-radius: 14px;
+            padding: 8px 18px;
+            text-align: center;
+            line-height: 1.5;
+        }
         .title {
             font-size: 24px;
             font-weight: bold;
@@ -298,6 +317,11 @@
                 <span class="track"></span>
                 <span>教學模式</span>
             </label>
+            <label class="teach-toggle" id="tensToggleWrap">
+                <input type="checkbox" id="tensToggle">
+                <span class="track"></span>
+                <span>十位淺色</span>
+            </label>
             <div class="title">🔢 順數與倒數</div>
         </div>
         <div class="score">⭐ 答對：<span id="score">0</span> 題</div>
@@ -306,6 +330,7 @@
     <div class="card">
         <div class="mode-banner" id="modeBanner">順數 ➡️ 小至大</div>
         <div class="teach-banner" id="teachBanner"></div>
+        <div class="tens-banner" id="tensBanner">淺色嗰個係十位數——順數同倒數，其實只係個位數順住 1 2 3 4 5 6 7 8 9 0，定係 9 8 7 6 5 4 3 2 1 0 嘅分別！</div>
         <div class="boxes" id="boxes"></div>
         <div class="numpad" id="numpad">
             <button class="num-btn" data-digit="1">1</button>
@@ -344,8 +369,19 @@
         var seq = [];          // 6 個正確數字
         var givens = [];       // 邊幾個位已經填好
         var direction = 'up';  // up = 順數, down = 倒數
+        var twoDigit = false;  // 今題係咪雙位數
         var selected = null;
         var score = 0;
+        var hideTens = false;
+
+        // 數字顯示：雙位數會將十位包入 span，方便變淺色
+        function formatNumber(n) {
+            var s = String(n);
+            if (s.length === 2) {
+                return '<span class="tens">' + s[0] + '</span><span>' + s[1] + '</span>';
+            }
+            return s;
+        }
 
         function rand(min, max) { return min + Math.floor(Math.random() * (max - min + 1)); }
         function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -357,7 +393,7 @@
 
         function newQuestion() {
             direction = pick(['up', 'down']);
-            var twoDigit = Math.random() < 0.5;   // 個位數同雙位數唔會溝住用
+            twoDigit = Math.random() < 0.5;   // 個位數同雙位數唔會溝住用
             var start, i;
             if (!twoDigit) {
                 start = (direction === 'up') ? rand(1, 4) : rand(6, 9);
@@ -380,6 +416,7 @@
             modeBanner.textContent = (direction === 'up') ? '順數 ➡️ 小至大' : '倒數 ➡️ 大至細';
             modeBanner.className = 'mode-banner' + (direction === 'up' ? '' : ' desc');
             teachBanner.textContent = TEACH_TEXT[direction];
+            updateTensUI();
 
             renderBoxes();
             setMsg('撳一個空格，再用下面嘅數字鍵填答案！', false);
@@ -410,10 +447,11 @@
                 box.setAttribute('role', 'button');
                 if (givens.indexOf(i) !== -1) {
                     box.classList.add('given');
-                    box.textContent = seq[i];
+                    box.innerHTML = formatNumber(seq[i]);
                     box.setAttribute('aria-label', '已經填好：' + seq[i]);
                 } else {
                     box.dataset.answer = seq[i];
+                    box.dataset.entry = '';
                     box.setAttribute('aria-label', '空格，第 ' + (i + 1) + ' 個位');
                     box.addEventListener('click', function () { selectBox(this); });
                     box.addEventListener('keydown', function (e) {
@@ -457,10 +495,11 @@
                 return;
             }
             var ans = selected.dataset.answer;
-            var cur = selected.textContent;
+            var cur = selected.dataset.entry || '';
             if (cur.length >= ans.length) return;
             cur += d;
-            selected.textContent = cur;
+            selected.dataset.entry = cur;
+            selected.innerHTML = formatNumber(cur);
             if (cur.length === ans.length) {
                 if (cur === ans) {
                     selected.classList.remove('selected', 'wrong');
@@ -475,6 +514,7 @@
                     setTimeout(function () {
                         box.classList.remove('wrong');
                         box.textContent = '';
+                        box.dataset.entry = '';
                     }, 450);
                 }
             }
@@ -482,7 +522,9 @@
 
         function pressDel() {
             if (selected && !selected.classList.contains('done')) {
-                selected.textContent = selected.textContent.slice(0, -1);
+                var cur = (selected.dataset.entry || '').slice(0, -1);
+                selected.dataset.entry = cur;
+                selected.innerHTML = cur === '' ? '' : formatNumber(cur);
             }
         }
 
@@ -533,6 +575,27 @@
             applyTeachPref();
         });
         applyTeachPref();
+
+        // 十位淺色開關（記住選擇；淨係雙位數題目先用到）
+        var tensToggle = document.getElementById('tensToggle');
+        var tensToggleWrap = document.getElementById('tensToggleWrap');
+        var tensBanner = document.getElementById('tensBanner');
+        try {
+            var storedTens = localStorage.getItem('seq_hide_tens');
+            if (storedTens !== null) hideTens = (storedTens === '1');
+        } catch (e) {}
+        function updateTensUI() {
+            tensToggleWrap.classList.toggle('disabled', !twoDigit);
+            tensToggle.disabled = !twoDigit;
+            tensToggle.checked = hideTens;
+            document.body.classList.toggle('hide-tens', hideTens && twoDigit);
+            tensBanner.style.display = (hideTens && twoDigit) ? 'block' : 'none';
+        }
+        tensToggle.addEventListener('change', function () {
+            hideTens = tensToggle.checked;
+            try { localStorage.setItem('seq_hide_tens', hideTens ? '1' : '0'); } catch (e) {}
+            updateTensUI();
+        });
 
         newQuestion();
     </script>
